@@ -1,22 +1,31 @@
 #include <iostream>
 #include <queue>
 #include <vector>
-#include "url.hpp"
+#include <CkSpider.h>
+#include "crawler.hpp"
 using namespace std;
 
 int main(){
-  auto compare = [](url a, url b) { return (a.getSize()) > (b.getSize());};
-  priority_queue<url, vector<url>, decltype(compare)> pq(compare);
-  string globo = "www.globo.com/";
-  string globoesporte = "www.globo.com/esporte/";
-  url url1(globo);
-  url url2(globoesporte);
-  pq.push(url1);
-  pq.push(url2);
-  while (!pq.empty()){
-    url u = pq.top();
-    cout << u.getSize() << " ";
-    pq.pop();
-   }
+  crawler cl;
+  // scheduler sch;
+  // CkSpider spider;
+  // string globo = "www.globo.com.br/";
+  // string gag = "www.9gag.com/";
+  // string globoesporte = "http://www.globo.com.br/esporte/index.html";
+  // string globoesportea = spider.canonicalizeUrl(globoesporte.c_str());
+  // cout << globoesportea;
+  // url url1(globo);
+  // url url2(globoesportea);
+  // url url3(gag);
+  // sch.addInbound(url1);
+  // sch.addInbound(url2);
+  // sch.addInbound(url3);
+  // int i=3;
+  // while (i>0){
+  //   url u = sch.getInbound();
+  //   cout << u.getName() << "\n";
+  //   i--;
+  //  }
+  cl.begin();
   return 0;
 }

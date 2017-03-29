@@ -4,20 +4,28 @@
 using namespace std;
 
 url::url(string &nm){
-  name = noHttp(nm);
+  name = nm;
   setSize(nm);
+}
+
+bool url::operator<(const url& a) const{
+  return size > a.size;
 }
 
 int url::getSize(){
   return size;
 }
 
-string url:noHttp(string &name){
-  if (strncmp("http://",name,7) == 0){
-    return name.substr(7);
-  }
+string url::getName(){
   return name;
 }
+
+// string url:noHttp(string &name){
+//   if (strncmp("http://",name,7) == 0){
+//     return name.substr(7);
+//   }
+//   return name;
+// }
 
 void url::setSize(string &name){
   size = 0;
@@ -26,7 +34,7 @@ void url::setSize(string &name){
     if (c == '/') size++;
   }
 }
-// 
+//
 // bool url::isBr(){
 //
 // }

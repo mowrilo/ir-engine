@@ -1,22 +1,22 @@
 #include <iostream>
 #include <unordered_set>
+#include <queue>
 #include "url.hpp"
 using namespace std;
-
 //max size of url (8)
 
 class scheduler{
-  private:
-        unordered_set<string> crawled;
-        auto compare = [](url a, url b) { return (a.getSize()) < (b.getSize());};
-        priority_queue<url, vector<url>, decltype(compare)> inbound(compare);
-        priority_queue<url, vector<url>, decltype(compare)> outbound(compare);
-
   public:
-        void addInbound(url);
-        void addOutbound(url);
-        void addCrawled(string);
+        scheduler();
+        void addInbound(url a);
+        void addOutbound(url a);
+        void addCrawled(string &name);
         url getInbound();
         url getOutbound();
-        bool checkCrawled(string);
-}
+        bool checkCrawled(string &name);
+
+  private:
+        unordered_set<string> crawled;
+        priority_queue<url, vector<url>> inbound;
+        priority_queue<url, vector<url>> outbound;
+};

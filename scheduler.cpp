@@ -1,8 +1,9 @@
 #include <iostream>
 #include <unordered_set>
-#include "url.hpp"
 #include "scheduler.hpp"
 using namespace std;
+
+scheduler::scheduler(){}
 
 void scheduler::addInbound(url a){
   inbound.push(a);
@@ -17,11 +18,15 @@ void scheduler::addCrawled(string &name){
 }
 
 url scheduler::getInbound(){
-  return inbound.top();
+  url inb = inbound.top();
+  inbound.pop();
+  return inb;
 }
 
 url scheduler::getOutbound(){
-  return outbound.top();
+  url outb = outbound.top();
+  outbound.pop();
+  return outb;
 }
 
 bool scheduler::checkCrawled(string &name){
