@@ -8,15 +8,15 @@ void crawler::begin(){
   CkSpider spider;
   scheduler sc;
   ofstream file;
-	file.open("cod.html");
-  string urlInit = "http://www.9gag.com/";
+	file.open("globo.com");
+  string urlInit = "http://www.globo.com";
   url pato(urlInit);
   sc.addOutbound(pato);
   //sp.Initialize(urlInit.c_str());
   //string asd = "http://www.globo.com/";
   //spider.AddUnspidered(asd.c_str());
   while (true){
-    cout << "OI\n";
+    //cout << "OI\n";
     url bla = sc.getOutbound();
     string a = bla.getName();
     CkString asd = spider.canonicalizeUrl(a.c_str());
@@ -28,37 +28,63 @@ void crawler::begin(){
     // spider.get_LastHtml(html);
     // string htmls = html.getString();
     // file << htmls;
-
+    // int i;
+    // for (i = 0; i <= 30; i++) {
     if (spider.CrawlNext()){
       //cout << success;
-      cout << spider.lastUrl() << "\n";
       string andre = spider.lastUrl();
+      // int nUnsp = spider.get_NumUnspidered();
+      //cout << "nUnsp: " << nUnsp << endl;
+      // for (int j = 0; j<nUnsp; j++){
+      // CkString nxt;
+      // spider.GetUnspideredUrl(j, nxt);
+      //nxt.saveToFile("/home/murilo/Documentos/ri/file.txt","utf-8");
+      //nxt = spider.canonicalizeUrl(nxt);//nxt.getString();
+      // string nextUrl = nxt.getString();
+      // cout << "proxs: " << nextUrl << endl;
+    // }
       //string andre = p.getString();
       sc.addCrawled(andre);
       if (andre.back() == '/'){
         andre.pop_back();
         sc.addCrawled(andre);
       }
+      cout << "DEU BOM " << andre << "\n";
+    // }
+    // else  cout << "DEU RUIM\n";
       //url macedo(andre);
       //sc.addOutbound(macedo);
 
       //joga tudo fora
-      int nUnsp = spider.get_NumUnspidered();
-      cout << "nUnsp: " << nUnsp << endl;
-      for (int i=0; i<nUnsp; i++){
+      int nOut = spider.get_NumOutboundLinks();
+      int nUnsp= spider.get_NumUnspidered();
+      cout << "nUnsp: " << nUnsp << "nOut: " << nOut << endl;
+      for (int i=0; i<nOut; i++){
         CkString nxt;
-        spider.GetUnspideredUrl(0, nxt);
+        spider.GetOutboundLink(i, nxt);
+        // nxt.saveToFile("/home/murilo/Documentos/ri/file.txt","utf-8");
+        //nxt = spider.canonicalizeUrl(nxt);//nxt.getString();
         string nextUrl = nxt.getString();
-        cout << "new url: " << nextUrl << endl;
+        string nxtUrl = spider.canonicalizeUrl(nextUrl.c_str());
         if (!sc.checkCrawled(nextUrl)){
           url prox(nextUrl);
+          //cout << "new url: " << prox.getName() << endl;
           sc.addOutbound(prox);
         }
         spider.SkipUnspidered(0);
       }
-      spider.SleepMs(1000);
+      // spider.SleepMs(1000);
       //adiciona tudo de novo
+      //for (int i=0; i<nUnsp; i++){
+      //url teste = sc.getOutbound();
+      //cout << teste.getName() << endl;}
+    //}
     }
+
   }
   file.close();
+}
+
+string crawler::normalizeUrl(string &name){
+
 }
