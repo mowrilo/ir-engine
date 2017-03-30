@@ -6,12 +6,12 @@ using namespace std;
 
 class binHeap {
   public:
+        binHeap(int max);
+        void heapify();
         void insert(url a);
         url extractMin();
-        void heapify();
 
   private:
         deque<url> queue;
         int maxSize;
-
 }
