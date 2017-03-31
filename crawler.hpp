@@ -4,12 +4,17 @@
 #include <CkString.h>
 #include <cstring>
 #include <fstream>
+#include <thread>
 using namespace std;
 
 class crawler{
   public:
-        crawler();
+        crawler(string &path);
         void begin();
-        string normalizeUrl(string &name);
-        bool isBr(string &name);
+        static void crawl(string urlInit);
+        // string normalizeUrl(string &name);
+        // bool isBr(string &name);
+
+  private:
+        string pathToStore;
 };
