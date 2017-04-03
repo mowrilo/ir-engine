@@ -20,9 +20,9 @@ bool scheduler::addInbound(url a){
   return false;
 }
 
-array<int,MAXLEN> scheduler::genWeightsHash(){
-  array<int, MAXLEN> wei;
-  for (int i=0; i<MAXLEN; i++) wei[i] = rand()%80 + 1;
+vector<int> scheduler::genWeightsHash(){
+  vector<int> wei;
+  for (int i=0; i<MAXLEN; i++) wei.push_back(rand()%80 + 1);
   return wei;
 }
 
@@ -44,9 +44,12 @@ bool scheduler::addOutbound(url a){
   return false;
 }
 
-void scheduler::addCrawled(string &name){
+void scheduler::addCrawled(string &name, string &domain){
   int key = hashFunc(name);
-  crawled.insert(key);
+  int keyDomain = hashFunc(domain);
+  unordered_map<int, unordered_set<int> >::iterator it = crawledDomains.find(keyDomain);
+  it->second.insert(key);
+  //crawledDomains.insert(key);
 }
 
 url scheduler::getInbound(){
@@ -61,7 +64,13 @@ url scheduler::getOutbound(){
   return outb;
 }
 
-bool scheduler::checkCrawled(string &name){
+bool scheduler::checkCrawled(string &name, string &domain){
   int key = hashFunc(name);
-  return crawled.find(key) != crawled.end();
+  int keyDomain = hashFunc(domain);
+  unordered_map<int, unordered_set<int> >::iterator it = crawledDomains.find(keyDomain);
+  if (it == crawledDomains.end())  return false;
+  else{
+    unordered_set<int>::iterator itSet = it->second.find(key);
+    return crawledDomains.find(key) != crawledDomains.end();
+  }
 }

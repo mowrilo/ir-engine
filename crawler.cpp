@@ -7,24 +7,26 @@ crawler::crawler(string &path){
 }
 
 void crawler::begin(){
-  for (int i=0; i<5; i++){
-      if (i==0) thread t(crawl,"http://www.globo.com");
-      else if (i==1) thread t(crawl,"http://www.uol.com.br");
-      else if (i==2) thread t(crawl,"http://www.uai.com.br");
-      else if (i==3) thread t(crawl,"http://www.ufmg.br");
-      else if (i==4) thread t(crawl,"http://www.pbh.gov.br");
-  }
+  // for (int i=0; i<5; i++){
+  //     if (i==0) thread t(crawl,"http://www.globo.com");
+  //     else if (i==1) thread t(crawl,"http://www.uol.com.br");
+  //     else if (i==2) thread t(crawl,"http://www.uai.com.br");
+  //     else if (i==3) thread t(crawl,"http://www.ufmg.br");
+  //     else if (i==4) thread t(crawl,"http://www.pbh.gov.br");
+  // }
+  crawl("http://www.uol.com.br");
 }
 
-void crawler::crawl(string urlInit){
+void crawler::crawl(string seedUrl){
   CkSpider spider;
   scheduler sc;
   ofstream file;
   //string urlInit = "http://www.globo.com";
   string filename = "/htmls.txt";
 	//file.open(pathToStore+filename);
-  url pato(urlInit);
+  url pato(seedUrl);
   sc.addOutbound(pato);
+  cout << "UIUIUI\n";
   while (true){
     url bla = sc.getOutbound();
     string a = bla.getName();
@@ -33,10 +35,11 @@ void crawler::crawl(string urlInit){
     spider.AddUnspidered(a.c_str());
     if (spider.CrawlNext()){
       string andre = spider.lastUrl();
-      sc.addCrawled(andre);
+      string andDom = spider.getBaseDomain(andre.c_str());
+      sc.addCrawled(andre, andDom);
       if (andre.back() == '/'){
         andre.pop_back();
-        sc.addCrawled(andre);
+        sc.addCrawled(andre, andDom);
       }
       cout << "DEU BOM " << andre << "\n";
 
@@ -56,7 +59,8 @@ void crawler::crawl(string urlInit){
         spider.GetUnspideredUrl(0, nxt);
         string nextUrl = nxt.getString();
         string nxtUrl = spider.canonicalizeUrl(nextUrl.c_str());
-        if (!sc.checkCrawled(nextUrl)){
+        string nxtDom = spider.getBaseDomain(nxtUrl.c_str());
+        if (!sc.checkCrawled(nextUrl, nxtDom)){
           url prox(nextUrl);
           sc.addInbound(prox);
         }
@@ -68,7 +72,8 @@ void crawler::crawl(string urlInit){
         spider.GetOutboundLink(i, nxt);
         string nextUrl = nxt.getString();
         string nxtUrl = spider.canonicalizeUrl(nextUrl.c_str());
-        if (!sc.checkCrawled(nextUrl)){
+        string nxtDom = spider.getBaseDomain(nxtUrl.c_str());
+        if (!sc.checkCrawled(nextUrl, nxtDom)){
           url prox(nextUrl);
           sc.addOutbound(prox);
         }

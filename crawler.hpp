@@ -11,7 +11,7 @@ class crawler{
   public:
         crawler(string &path);
         void begin();
-        static void crawl(string urlInit);
+        static void crawl(string seedUrl);
         // string normalizeUrl(string &name);
         // bool isBr(string &name);
 

@@ -1,10 +1,13 @@
 #include <iostream>
 #include <unordered_set>
 #include <queue>
+#include <vector>
+#include <unordered_map>
 #include "url.hpp"
 using namespace std;
 
-#define MAXLEN 80
+#define MAXLEN  80
+#define MAXDOM  10
 //max size of url (8)
 
 class scheduler{
@@ -12,16 +15,16 @@ class scheduler{
         scheduler();
         bool addInbound(url a);
         bool addOutbound(url a);
-        void addCrawled(string &name);
-        array<int,MAXLEN> genWeightsHash();
+        void addCrawled(string &name, string &domain);
+        vector<int> genWeightsHash();
         int hashFunc(string &name);
         url getInbound();
         url getOutbound();
-        bool checkCrawled(string &name);
+        bool checkCrawled(string &name, string &domain);
 
   private:
-        unordered_set<int> crawled;
-        array<int,MAXLEN> weights;
+        unordered_map<int, unordered_set<int> > crawledDomains;
+        vector<int> weights;
         priority_queue<url, vector<url>> inbound;
         priority_queue<url, vector<url>> outbound;
 };
