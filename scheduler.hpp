@@ -23,7 +23,8 @@ class scheduler{
         bool checkCrawled(string &name, string &domain);
 
   private:
-        unordered_map<int, unordered_set<int> > crawledDomains;
+        unordered_map<int, int> crawledDomains;
+        unordered_set<int> crawledPages; //HASH PARA DOMINIO, COM NUM CRAWLED
         vector<int> weights;
         priority_queue<url, vector<url>> inbound;
         priority_queue<url, vector<url>> outbound;

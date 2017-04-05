@@ -12,7 +12,7 @@ using namespace std;
 int main(){
   string path = "/media/murilo/storage/pathHtmls";
   crawler cl(path);
-  cout << "OI";
+  //cout << "OI";
   cl.begin();
   return 0;
 }

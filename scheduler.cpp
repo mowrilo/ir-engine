@@ -38,8 +38,8 @@ int scheduler::hashFunc(string &name){
 
 bool scheduler::addOutbound(url a){
   if (outbound.size() < MAXCADA){
-  outbound.push(a);
-  return true;
+    outbound.push(a);
+    return true;
   }
   return false;
 }
@@ -47,9 +47,28 @@ bool scheduler::addOutbound(url a){
 void scheduler::addCrawled(string &name, string &domain){
   int key = hashFunc(name);
   int keyDomain = hashFunc(domain);
-  unordered_map<int, unordered_set<int> >::iterator it = crawledDomains.find(keyDomain);
-  it->second.insert(key);
-  //crawledDomains.insert(key);
+  cout << "\nHello from scheduler\n";
+  unordered_map<int, int>::iterator it;
+  if (!crawledDomains.empty()){
+    it = crawledDomains.find(keyDomain);
+    cout << "Getting numCrawled";
+    if (it != crawledDomains.end()) {
+      unordered_set<int>::iterator itPage = crawledPages.find(key);
+      if (itPage == crawledPages.end()){
+        it->second++;
+        crawledPages.insert(key);
+      }
+    }
+    else{
+      crawledDomains.insert({keyDomain, 1});
+      crawledPages.insert(key);
+    }
+  }
+  else{
+    crawledDomains.insert({keyDomain,1});
+    crawledPages.insert(key);
+  }
+  cout << "\nGoodbye from scheduler\n";
 }
 
 url scheduler::getInbound(){
@@ -67,10 +86,9 @@ url scheduler::getOutbound(){
 bool scheduler::checkCrawled(string &name, string &domain){
   int key = hashFunc(name);
   int keyDomain = hashFunc(domain);
-  unordered_map<int, unordered_set<int> >::iterator it = crawledDomains.find(keyDomain);
+  unordered_map<int, int>::iterator it = crawledDomains.find(keyDomain);
   if (it == crawledDomains.end())  return false;
   else{
-    unordered_set<int>::iterator itSet = it->second.find(key);
-    return crawledDomains.find(key) != crawledDomains.end();
+    return crawledPages.find(key) != crawledPages.end();
   }
 }

@@ -1,4 +1,7 @@
 #include "crawler.hpp"
+scheduler crawler::sc;
+mutex crawler::mutexQueue;
+mutex crawler::mutexCrawled;
 
 using namespace std;
 
@@ -14,33 +17,45 @@ void crawler::begin(){
   //     else if (i==3) thread t(crawl,"http://www.ufmg.br");
   //     else if (i==4) thread t(crawl,"http://www.pbh.gov.br");
   // }
-  crawl("http://www.uol.com.br");
+  string seed1 = "http://brasilecrawler::scola.uol.com.br/biologia/";
+  thread t(crawl,seed1);
+  t.join();
 }
 
 void crawler::crawl(string seedUrl){
   CkSpider spider;
-  scheduler sc;
+  cout << "oi beleza?\n";
+  //crawler::scheduler crawler::sc;
   ofstream file;
   //string urlInit = "http://www.globo.com";
   string filename = "/htmls.txt";
 	//file.open(pathToStore+filename);
   url pato(seedUrl);
-  sc.addOutbound(pato);
-  cout << "UIUIUI\n";
+  crawler::mutexQueue.lock();
+  crawler::sc.addOutbound(pato);
+  crawler::mutexQueue.unlock();
   while (true){
-    url bla = sc.getOutbound();
+    crawler::mutexQueue.lock();
+    url bla = crawler::sc.getOutbound();
+    crawler::mutexQueue.unlock();
     string a = bla.getName();
     CkString asd = spider.canonicalizeUrl(a.c_str());
     spider.Initialize(asd.getString());
     spider.AddUnspidered(a.c_str());
+    cout << a;
     if (spider.CrawlNext()){
       string andre = spider.lastUrl();
       string andDom = spider.getBaseDomain(andre.c_str());
-      sc.addCrawled(andre, andDom);
+      cout << andre << "   " << andDom;
+      cout << "\nPASSOU\n";
+      crawler::mutexCrawled.lock();
+      crawler::sc.addCrawled(andre, andDom);
+      cout << "\nPASSOU\n";
       if (andre.back() == '/'){
         andre.pop_back();
-        sc.addCrawled(andre, andDom);
+        crawler::sc.addCrawled(andre, andDom);
       }
+      crawler::mutexCrawled.unlock();
       cout << "DEU BOM " << andre << "\n";
 
       CkString html;
@@ -60,9 +75,14 @@ void crawler::crawl(string seedUrl){
         string nextUrl = nxt.getString();
         string nxtUrl = spider.canonicalizeUrl(nextUrl.c_str());
         string nxtDom = spider.getBaseDomain(nxtUrl.c_str());
-        if (!sc.checkCrawled(nextUrl, nxtDom)){
+        crawler::mutexCrawled.lock();
+        bool isCrawled = crawler::sc.checkCrawled(nextUrl, nxtDom);
+        crawler::mutexCrawled.unlock();
+        if (!isCrawled){
           url prox(nextUrl);
-          sc.addInbound(prox);
+          crawler::mutexQueue.lock();
+          crawler::sc.addInbound(prox);
+          crawler::mutexQueue.unlock();
         }
         spider.SkipUnspidered(0);
       }
@@ -73,9 +93,14 @@ void crawler::crawl(string seedUrl){
         string nextUrl = nxt.getString();
         string nxtUrl = spider.canonicalizeUrl(nextUrl.c_str());
         string nxtDom = spider.getBaseDomain(nxtUrl.c_str());
-        if (!sc.checkCrawled(nextUrl, nxtDom)){
+        crawler::mutexCrawled.lock();
+        bool isCrawled = crawler::sc.checkCrawled(nextUrl, nxtDom);
+        crawler::mutexCrawled.unlock();
+        if (!isCrawled){
           url prox(nextUrl);
-          sc.addOutbound(prox);
+          crawler::mutexQueue.lock();
+          crawler::sc.addOutbound(prox);
+          crawler::mutexQueue.unlock();
         }
       }
       spider.ClearOutboundLinks();
