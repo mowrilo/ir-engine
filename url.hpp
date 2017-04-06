@@ -3,15 +3,21 @@ using namespace std;
 
 class url{
   public:
-        url (string &nm);
-        int getSize();
+        url (string &nm, string &dm);
+        int getWeight();
         //string noHttp(string &name);
-        void setSize(string &name);
+        void setWeight(string &name);
         string getName();
+        string getDomain();
+        void setValid(string &name);
+        bool checkValid();
+        void increaseWeight();
         // bool isBr();
         bool operator<(const url& a) const;
 
   private:
         string name;
-        int size;
+        string domain;
+        int weight;
+        bool isValid;
 };

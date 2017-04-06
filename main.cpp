@@ -10,7 +10,7 @@ using namespace std;
 
 
 int main(){
-  string path = "/media/murilo/storage/pathHtmls";
+  string path = "./htmls";
   crawler cl(path);
   //cout << "OI";
   cl.begin();

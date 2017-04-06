@@ -3,21 +3,35 @@
 #include <iostream>
 using namespace std;
 
-url::url(string &nm){
+url::url(string &nm, string &dm){
   name = nm;
-  setSize(nm);
+  domain = dm;
+  setWeight(nm);
+  setValid(nm);
+}
+
+void url::setValid(string &name){
+  isValid = (name.size() > 0);
+}
+
+bool url::checkValid(){
+  return isValid;
 }
 
 bool url::operator<(const url& a) const{
-  return size > a.size;
+  return weight > a.weight;
 }
 
-int url::getSize(){
-  return size;
+int url::getWeight(){
+  return weight;
 }
 
 string url::getName(){
   return name;
+}
+
+string url::getDomain(){
+  return domain;
 }
 
 // string url:noHttp(string &name){
@@ -27,12 +41,17 @@ string url::getName(){
 //   return name;
 // }
 
-void url::setSize(string &name){
-  size = 0;
+void url::increaseWeight(){
+  weight+=5;
+}
+
+void url::setWeight(string &name){
+  weight = 0;
   for (char c: name){
-    if (c == '.') size++;
-    if (c == '/') size++;
+    if (c == '.') weight++;
+    if (c == '/') weight++;
   }
+  weight*=10;
 }
 //
 // bool url::isBr(){
