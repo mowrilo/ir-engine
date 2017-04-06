@@ -1,7 +1,6 @@
 #include "crawler.hpp"
 
 #define NTHREADS 80
-#define NONE "n"
 
 scheduler crawler::sc;
 mutex crawler::mutexQueue;
@@ -30,13 +29,14 @@ bool crawler::isBr(string &domain){
 
 void crawler::begin(){
   vector<thread> thrds;
+  string none = "";
   int nSeeds = seeds.size();
   for (int i=0; i<nSeeds; i++){
     thrds.push_back(thread(crawl, seeds[i]));
   }
 
   for (int i=nSeeds; i<NTHREADS; i++){
-    thrds.push_back(thread(crawl, NONE));
+    thrds.push_back(thread(crawl, none));
   }
 
   for (int i=0; i<NTHREADS; i++){
@@ -53,12 +53,14 @@ void crawler::crawl(string seedUrl){
   //string urlInit = "http://www.globo.com";
   string filename = "/htmls.txt";
 	//file.open(pathToStore+filename);
-  if(seedUrl.compare(NONE)){
+  if(seedUrl.size() != 0){
     //cout << "OIOIOI\n";
     string seedDomain = spider.getBaseDomain(seedUrl.c_str());
     url pato(seedUrl, seedDomain);
     mutexQueue.lock();
+    //cout << "mutexQueue locked by some thread\n";
     sc.addInbound(pato);
+    //cout << "mutexQueue to be unlocked by some thread\n";
     mutexQueue.unlock();
   }
 
@@ -109,7 +111,7 @@ void crawler::crawl(string seedUrl){
 
         int nOut = spider.get_NumOutboundLinks();
         int nUnsp= spider.get_NumUnspidered();
-        //cout << "nUnsp: " << nUnsp << " nOut: " << nOut << endl;
+        cout << "nUnsp: " << nUnsp << " nOut: " << nOut << endl;
 
         for (int i=0; i<nUnsp; i++){
           CkString nxt;
@@ -118,10 +120,11 @@ void crawler::crawl(string seedUrl){
           string nxtUrl = spider.canonicalizeUrl(nextUrl.c_str());
           string nxtDom = spider.getBaseDomain(nxtUrl.c_str());
           mutexCrawled.lock();
-          bool isCrawled = sc.checkCrawled(nextUrl, nxtDom);
+          bool isCrawled = sc.checkCrawled(nxtUrl, nxtDom);
           mutexCrawled.unlock();
           if (!isCrawled){
-            url prox(nextUrl, nxtDom);
+            url prox(nxtUrl, nxtDom);
+            cout << "Adding " << nxtUrl << " of domain " << nxtDom << " on Inbound URLs\n";
             mutexQueue.lock();
             sc.addInbound(prox);
             mutexQueue.unlock();
@@ -136,10 +139,11 @@ void crawler::crawl(string seedUrl){
           string nxtUrl = spider.canonicalizeUrl(nextUrl.c_str());
           string nxtDom = spider.getBaseDomain(nxtUrl.c_str());
           mutexCrawled.lock();
-          bool isCrawled = sc.checkCrawled(nextUrl, nxtDom);
+          bool isCrawled = sc.checkCrawled(nxtUrl, nxtDom);
           mutexCrawled.unlock();
           if (!isCrawled){
-            url prox(nextUrl, nxtDom);
+            url prox(nxtUrl, nxtDom);
+            cout << "Adding " << nxtUrl << " of domain " << nxtDom << " on Outbound URLs\n";
             mutexQueue.lock();
             sc.addOutbound(prox);
             mutexQueue.unlock();
@@ -154,6 +158,13 @@ void crawler::crawl(string seedUrl){
   file.close();
 }
 
+string crawler::getUrlDomain(string &url){
+
+}
+
+string crawler::normalizeUrl(string &name){
+
+}
 
 
 //

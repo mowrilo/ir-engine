@@ -14,7 +14,8 @@ class crawler{
         crawler(string &path);
         void begin();
         static void crawl(string seedUrl);
-        // string normalizeUrl(string &name);
+        string getUrlDomain(string &url);
+        string normalizeUrl(string &name);
         bool isBr(string &domain);
 
   private:

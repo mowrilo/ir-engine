@@ -13,39 +13,52 @@ scheduler::scheduler(){
 }
 
 bool scheduler::addInbound(url a){
+  //cout << "Inserting url " << a.getName() << " on heap of size " << inbound.size() << "...\n";
   if (inbound.size() < MAXQUEUE){
     inbound.push(a);
+    //cout << "Success.\n";
     return true;
   }
+  //cout << "Failed.\n";
   return false;
 }
 
 url scheduler::getUrl(){
   int timeSec = clock()/CLOCKS_PER_SEC;
 //  if (timeSec)
-  if ((whichUrl%3 == 0) || (whichUrl < 10)) {
+  if (whichUrl%3 == 0) {// || (whichUrl < 10)
+    // cout << "Trying to get inbound URL on heap of size"<< inbound.size() << "...\n";
+    // cout << "Inbound it is.\n";
     if (inbound.empty()){
-      string no = "none";
+      // cout << "Returning not valid because of empty heap" << rand()%10 << ".\n";
+      string no = "";
       url notValid(no,no);
       return notValid;
     }
     url inb = inbound.top();
     string dom = inb.getDomain();
     int key = hashFunc(dom);
+    //cout << "trying domain: " << dom << " on heap of size " << inbound.size() << endl;
     unordered_map<int, double>::iterator it = crawledDomains.find(key);
     if ((it != crawledDomains.end()) && (timeSec < it->second + 30)){
       inb.increaseWeight();
+      // cout << "Returning not valid because of time.\n";
       string no = "";
       url notValid(no,no);
       return notValid;
     }
     inbound.pop();
     whichUrl++;
+    // cout << "Inbound it is.\n";
+    // cout << "Returning valid URL: " << inb.getName() << "\n";
     return inb;
   }
   else{
+    // cout << "Trying to get URL on heap of size"<< outbound.size() << "...\n";
+    // cout << "Outbound it is.\n";
     if (outbound.empty()){
       string no = "";
+      //cout << "Returning not valid because of empty heap" << rand()%10 << ".\n";
       url notValid(no,no);
       return notValid;
     }
@@ -56,12 +69,15 @@ url scheduler::getUrl(){
     unordered_map<int, double>::iterator it = crawledDomains.find(key);
     if ((it != crawledDomains.end()) && (timeSec < (it->second + 30))){
       outb.increaseWeight();
+      //cout << "Returning not valid because of time.\n";
       string no = "";
       url notValid(no,no);
       return notValid;
     }
     outbound.pop();
     whichUrl++;
+    // cout << "Outbound it is.\n";
+    // cout << "Returning valid URL: " << outb.getName() << "\n";
     return outb;
   }
   //return true;
