@@ -26,7 +26,8 @@ bool scheduler::addInbound(url a){
 url scheduler::getUrl(){
   int timeSec = clock()/CLOCKS_PER_SEC;
 //  if (timeSec)
-  if (whichUrl%3 == 0) {// || (whichUrl < 10)
+  whichUrl;
+  if ((whichUrl%3 == 0) || (whichUrl < 10)) {//
     // cout << "Trying to get inbound URL on heap of size"<< inbound.size() << "...\n";
     // cout << "Inbound it is.\n";
     if (inbound.empty()){
@@ -58,7 +59,7 @@ url scheduler::getUrl(){
     // cout << "Outbound it is.\n";
     if (outbound.empty()){
       string no = "";
-      //cout << "Returning not valid because of empty heap" << rand()%10 << ".\n";
+      // cout << "Returning not valid because of empty heap. rand:" << rand()%10 << ".\n";
       url notValid(no,no);
       return notValid;
     }
@@ -69,7 +70,7 @@ url scheduler::getUrl(){
     unordered_map<int, double>::iterator it = crawledDomains.find(key);
     if ((it != crawledDomains.end()) && (timeSec < (it->second + 30))){
       outb.increaseWeight();
-      //cout << "Returning not valid because of time.\n";
+      // cout << "Returning not valid because of time.\n";
       string no = "";
       url notValid(no,no);
       return notValid;
@@ -100,6 +101,7 @@ int scheduler::hashFunc(string &name){
 }
 
 bool scheduler::addOutbound(url a){
+  cout << "oi\n";
   if (outbound.size() < MAXQUEUE){
     outbound.push(a);
     return true;

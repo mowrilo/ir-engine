@@ -1,5 +1,6 @@
 #include <iostream>
 #include "scheduler.hpp"
+#include "kmp.hpp"
 #include <CkSpider.h>
 #include <CkString.h>
 #include <cstring>
@@ -7,6 +8,7 @@
 #include <thread>
 #include <queue>
 #include <mutex>
+#include <string>
 using namespace std;
 
 class crawler{
@@ -14,9 +16,10 @@ class crawler{
         crawler(string &path);
         void begin();
         static void crawl(string seedUrl);
-        string getUrlDomain(string &url);
-        string normalizeUrl(string &name);
-        bool isBr(string &domain);
+        static string getUrlDomain(string &url);
+        static string normalizeUrl(string &name);
+        static int isBr(string &domain);
+        static bool isDomain(string &subUrl);
 
   private:
         static int nPages;
@@ -26,4 +29,5 @@ class crawler{
         static mutex mutexCrawled;
         static mutex mutexNPages;
         vector<string> seeds;
+        static vector<string> domainTypes;
 };
