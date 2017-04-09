@@ -1,6 +1,6 @@
 #include "crawler.hpp"
 
-#define NTHREADS 80
+#define NTHREADS 5//80
 
 scheduler crawler::sc;
 mutex crawler::mutexQueue;
@@ -120,7 +120,7 @@ void crawler::crawl(string seedUrl){
           CkString nxt;
           spider.GetOutboundLink(i, nxt);
           string nextUrl = nxt.getString();
-          cout << "aqui ele roda\n";
+          // cout << "aqui ele roda\n";
           // string nxtUrl = spider.canonicalizeUrl(nextUrl.c_str());
           if (nextUrl.back() != '/') nextUrl.push_back('/');
           string nxtDom = getUrlDomain(nextUrl);
@@ -130,10 +130,10 @@ void crawler::crawl(string seedUrl){
           if (!isCrawled){
             url prox(nextUrl, nxtDom);
             // cout << "Adding outbound " << nxtUrl << " of domain " << nxtDom << " on Outbound URLs\n";
-            cout << "aqui ele roda tambem!\n";
+            // cout << "aqui ele roda tambem!\n";
             mutexQueue.lock();
             sc.addOutbound(prox);
-            cout << "aqui?\n";
+            // cout << "aqui?\n";
             mutexQueue.unlock();
           }
         }
@@ -198,7 +198,7 @@ string crawler::getUrlDomain(string &url){
   }
   i++;
   //cout << i << "  " << posFim << "\n";
-  cout << url.substr(i,(posFim-i-1)) << " " << posFim << " " << j << endl;
+  // cout << url.substr(i,(posFim-i-1)) << " " << posFim << " " << j << endl;
   return url.substr(i,(posFim-i-1));
 }
 

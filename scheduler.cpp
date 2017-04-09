@@ -101,7 +101,7 @@ int scheduler::hashFunc(string &name){
 }
 
 bool scheduler::addOutbound(url a){
-  cout << "oi\n";
+  // cout << "oi\n";
   if (outbound.size() < MAXQUEUE){
     outbound.push(a);
     return true;

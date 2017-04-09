@@ -33,14 +33,6 @@ string url::getName(){
 string url::getDomain(){
   return domain;
 }
-
-// string url:noHttp(string &name){
-//   if (strncmp("http://",name,7) == 0){
-//     return name.substr(7);
-//   }
-//   return name;
-// }
-
 void url::increaseWeight(){
   weight+=5;
 }
@@ -53,7 +45,3 @@ void url::setWeight(string &name){
   }
   weight*=10;
 }
-//
-// bool url::isBr(){
-//
-// }
