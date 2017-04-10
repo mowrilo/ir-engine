@@ -1,10 +1,23 @@
-#include<iostream>
+#include <iostream>
+#include <thread>
+#include <string>
+#include <sstream>
+#include <fstream>
+
+#define NHTML 100
+
+using namespace std;
 
 class fileManager{
 public:
-    void formatFile();
-    void 
+    fileManager(thread::id threadId);
+    void formatHtml(string &html);
+    string generateFileName();
+    void writeHtml(string &url, string &html);
 
 private:
-
-}
+    int nFiles;
+    string path;
+    string fileName;
+    fstream file;
+};

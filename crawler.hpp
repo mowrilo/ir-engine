@@ -1,6 +1,7 @@
 #include <iostream>
 #include "scheduler.hpp"
 #include "kmp.hpp"
+#include "filemanager.hpp"
 #include <CkSpider.h>
 #include <CkString.h>
 #include <cstring>

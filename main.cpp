@@ -14,6 +14,13 @@ int main(){
   string path = "./htmls";
   crawler cl(path);
   cl.begin();
+  // ofstream a;
+  // a.open("file1.txt");
+  // a << "aewesfdad\n";
+  // a.close();
+  // a.open("file2.txt");
+  // a << "olaraewesfdad\n";
+  // a.close();
   //string text = "http://google.com/";//"http://mundoeducacao.bol.uol.com.br/biologia/origem-vida.htm";
   //string pattern = ".br/";
   //cout << "\n\nFAFSDF   " << text.substr(13,4) << endl;

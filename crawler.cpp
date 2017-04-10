@@ -50,10 +50,11 @@ void crawler::begin(){
 
 void crawler::crawl(string seedUrl){
   CkSpider spider;
+  fileManager fm(this_thread::get_id());
   //signal(SIGPIPE, SIG_IGN);
-  queue<url> shortTermScheduler;
-  ofstream file;
-  string filename = "/htmls.txt";
+  //queue<url> shortTermScheduler;
+  // ofstream file;
+  // string filename = "/htmls.txt";
   if(seedUrl.size() != 0){
     string seedDomain = getUrlDomain(seedUrl);
     url pato(seedUrl, seedDomain);
@@ -82,22 +83,23 @@ void crawler::crawl(string seedUrl){
         string andDom = getUrlDomain(andre);
         sc.addCrawledDomain(andDom);
         mutexCrawled.unlock();
-        file << andre << "\n";
-        cout << andre << " threadid: " << this_thread::get_id() << "\n";
-
+        //file << andre << "\n";
+        //cout << andre << " threadid: " << this_thread::get_id() << "\n";
         CkString html;
         spider.get_LastHtml(html);
-        file << html.getString();
+        string htmlStr = html.getString();
+        fm.writeHtml(andre,htmlStr);
+        //file << html.getString();
 
         int nOut = spider.get_NumOutboundLinks();
         int nUnsp= spider.get_NumUnspidered();
-        cout << "nUnsp: " << nUnsp << " nOut: " << nOut << endl;
+        //cout << "nUnsp: " << nUnsp << " nOut: " << nOut << endl;
         for (int i=0; i<nOut; i++){
           CkString nxt;
           spider.GetOutboundLink(i, nxt);
           string nextUrl = nxt.getString();
           int nextSize = nextUrl.size();
-          if ((nextSize < 100) && (nextSize > 10)){// && (isBr(nextUrl) > 0)
+          if ((nextSize < 100) && (nextSize > 10) && (isBr(nextUrl) > 0)){// && (isBr(nextUrl) > 0)
             if (nextUrl.back() != '/') nextUrl.push_back('/');
             string nxtDom = getUrlDomain(nextUrl);
             mutexCrawled.lock();
@@ -118,7 +120,7 @@ void crawler::crawl(string seedUrl){
           spider.GetUnspideredUrl(0, nxt);
           string nxtUrl = nxt.getString();
           int nextSize = nxtUrl.size();
-          if ((nextSize < 100) && (nextSize > 10)){
+          if ((nextSize < 100) && (nextSize > 10)){// && (isBr(nxtUrl) > 0)){
             if (nxtUrl.back() != '/') nxtUrl.push_back('/');
             string nxtDom = getUrlDomain(nxtUrl);
             mutexCrawled.lock();
@@ -136,7 +138,7 @@ void crawler::crawl(string seedUrl){
       }
     }
   }
-  file.close();
+  // file.close();
 }
 
 string crawler::getUrlDomain(string &url){
@@ -154,6 +156,7 @@ string crawler::getUrlDomain(string &url){
   }
   i--;
   while ((url[i] != '.') && (i>0)) i--;
+  // cout << url << " i: " << i << " j: " << j << endl;
   string subUrl = url.substr(i,(j-i));
   bool isdmn = isDomain(subUrl);
   if (isdmn){
@@ -161,6 +164,7 @@ string crawler::getUrlDomain(string &url){
     while ((url[i] != '.') && (url[i] != '/')) i--;
   }
   i++;
+  // cout << url << " i: " << i << " posFim: " << posFim << endl;
   return url.substr(i,(posFim-i-1));
 }
 
