@@ -27,7 +27,8 @@ class crawler{
         string pathToStore;
         static scheduler sc;
         static mutex mutexQueue;
-        static mutex mutexCrawled;
+        static mutex mutexCrawledDomains;
+        static mutex mutexCrawledPages;
         static mutex mutexNPages;
         vector<string> seeds;
         static vector<string> domainTypes;

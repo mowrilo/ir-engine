@@ -5,7 +5,7 @@ class url{
   public:
         url (string &nm, string &dm, int offset);
         int getWeight();
-        void setWeight(string &name, int offset);
+        int setWeight(string &name, int offset);
         string getName();
         string getDomain();
         void setValid(string &name);

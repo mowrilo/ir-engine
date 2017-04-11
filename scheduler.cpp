@@ -23,7 +23,7 @@ bool scheduler::addInbound(url a){
 
 url scheduler::getUrl(){
   int timeSec = clock()/CLOCKS_PER_SEC;
-  ctrlInOut = 1;
+  // ctrlInOut = 1;
   if (ctrlInOut%3 == 0){// || (whichUrl < 10))
     if (inbound.empty()){
       string no = "";

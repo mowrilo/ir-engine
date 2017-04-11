@@ -1,12 +1,13 @@
 #include "crawler.hpp"
 
-#define NTHREADS 100
+#define NTHREADS 200
 
 //FAZER A FILA INTERNA
 
 scheduler crawler::sc;
 mutex crawler::mutexQueue;
-mutex crawler::mutexCrawled;
+mutex crawler::mutexCrawledDomains;
+mutex crawler::mutexCrawledPages;
 mutex crawler::mutexNPages;
 vector<string> crawler::domainTypes;
 int crawler::nPages;
@@ -64,17 +65,17 @@ void crawler::crawl(string seedUrl, int id){
     string seedDomain = getUrlDomain(seedUrl);
     url pato(seedUrl, seedDomain,0);
     mutexQueue.lock();
-    sc.addOutbound(pato);
+    sc.addInbound(pato);
     mutexQueue.unlock();
   }
 
   while (true){
     for (int i=0;i<20;i++){
-      mutexCrawled.lock();
+      mutexCrawledDomains.lock();
       mutexQueue.lock();
       url bla = sc.getUrl();
       mutexQueue.unlock();
-      mutexCrawled.unlock();
+      mutexCrawledDomains.unlock();
       shortTermScheduler.push(bla);
     }
     while (!shortTermScheduler.empty()){//for (int i=0;i<20;i++){
@@ -85,11 +86,10 @@ void crawler::crawl(string seedUrl, int id){
       if (got){
         // cout << "oigot\n";
         string andre = bla.getName();
-        string andDom = getUrlDomain(andre);
-
-        mutexCrawled.lock();
+        string andDom = bla.getDomain();
+        mutexCrawledDomains.lock();
         sc.addCrawledDomain(andDom);
-        mutexCrawled.unlock();
+        mutexCrawledDomains.unlock();
         // if (id == chamada%NTHREADS){
         //   cout << "thread " << id << " presente!\n";
         //   chamada++;
@@ -118,18 +118,24 @@ void crawler::crawl(string seedUrl, int id){
             spider.GetOutboundLink(i, nxt);
             string nextUrl = nxt.getString();
             int nextSize = nextUrl.size();
-            if ((nextSize < 100) && (nextSize > 10)){// && (isBr(nextUrl) > 0)){// && (isBr(nextUrl) > 0)
+            bool isbra = (isBr(nextUrl) > 0);
+            if ((nextSize < 100) && (nextSize > 10) && (isbra)){// && (isBr(nextUrl) > 0)
               if (nextUrl.back() != '/') nextUrl.push_back('/');
               string nxtDom = getUrlDomain(nextUrl);
-              mutexCrawled.lock();
-              if (!sc.checkCrawled(nextUrl)){
-                url prox(nextUrl, nxtDom, i);
-                sc.addCrawledUrl(nextUrl);
-                mutexQueue.lock();
-                sc.addOutbound(prox);
-                mutexQueue.unlock();
+              if (nxtDom.size() > 0){
+                mutexCrawledPages.lock();
+                bool isCrawled = sc.checkCrawled(nextUrl);
+                mutexCrawledPages.unlock();
+                if (!isCrawled){
+                  int wei = i*5;
+                  //if (!isbra)  wei+=500;
+                  url prox(nextUrl, nxtDom, wei);
+                  sc.addCrawledUrl(nextUrl);
+                  mutexQueue.lock();
+                  sc.addOutbound(prox);
+                  mutexQueue.unlock();
+                }
               }
-              mutexCrawled.unlock();
             }
           }
           spider.ClearOutboundLinks();
@@ -142,15 +148,18 @@ void crawler::crawl(string seedUrl, int id){
             if ((nextSize < 100) && (nextSize > 10)){// && (isBr(nxtUrl) > 0)){
               if (nxtUrl.back() != '/') nxtUrl.push_back('/');
               string nxtDom = getUrlDomain(nxtUrl);
-              mutexCrawled.lock();
-              if (!sc.checkCrawled(nxtUrl)){
-                url prox(nxtUrl, nxtDom, i*10);
-                mutexQueue.lock();
-                sc.addCrawledUrl(nxtUrl);
-                sc.addOutbound(prox);
-                mutexQueue.unlock();
+              if (nxtDom.size() > 0){
+                mutexCrawledPages.lock();
+                bool isCrawled = sc.checkCrawled(nxtUrl);
+                mutexCrawledPages.unlock();
+                if (!isCrawled){
+                  url prox(nxtUrl, nxtDom, i*8);
+                  mutexQueue.lock();
+                  sc.addCrawledUrl(nxtUrl);
+                  sc.addInbound(prox);
+                  mutexQueue.unlock();
+                }
               }
-              mutexCrawled.unlock();
             }
             spider.SkipUnspidered(0);
           }
@@ -177,6 +186,7 @@ string crawler::getUrlDomain(string &url){
   i--;
   while ((url[i] != '.') && (i>0)) i--;
   // cout << url << " i: " << i << " j: " << j << endl;
+  if (i > url.length()) return "";
   string subUrl = url.substr(i,(j-i));
   bool isdmn = isDomain(subUrl);
   if (isdmn){
@@ -185,6 +195,7 @@ string crawler::getUrlDomain(string &url){
   }
   i++;
   // cout << url << " i: " << i << " posFim: " << posFim << endl;
+  if (i > url.length()) return "";
   return url.substr(i,(posFim-i-1));
 }
 

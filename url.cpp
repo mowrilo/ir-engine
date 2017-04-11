@@ -6,7 +6,7 @@ using namespace std;
 url::url(string &nm, string &dm, int offset){
   name = nm;
   domain = dm;
-  setWeight(nm,offset);
+  weight = setWeight(nm,offset);
   setValid(nm);
 }
 
@@ -37,12 +37,13 @@ void url::increaseWeight(){
   weight+=5;
 }
 
-void url::setWeight(string &name, int offset){
-  weight = 0;
+int url::setWeight(string &name, int offset){
+  int weight = 0;
   for (char c: name){
     if (c == '.') weight++;
     if (c == '/') weight++;
   }
   weight*=10;
   weight+=offset;
+  return weight;
 }

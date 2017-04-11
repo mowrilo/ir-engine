@@ -32,6 +32,6 @@ void fileManager::writeHtml(string &url, string &html){
   stringstream ss;
   formatHtml(html);
   ss << "||| " << url << " | " << html << " ";
-  if (nFiles%20 == 19)  file << ss.str();
+  if (nFiles%50 == 49)  file << ss.str();
   nFiles++;
 }
