@@ -2,18 +2,22 @@
 
 #define NTHREADS 100
 
+//FAZER A FILA INTERNA
+
 scheduler crawler::sc;
 mutex crawler::mutexQueue;
 mutex crawler::mutexCrawled;
 mutex crawler::mutexNPages;
 vector<string> crawler::domainTypes;
 int crawler::nPages;
+int crawler::chamada;
 
 using namespace std;
 
 crawler::crawler(string &path){
   pathToStore = path;
   this->nPages = 0;
+  this->chamada = 0;
   ifstream file, file2;
   file.open("seeds");
   string seedUrl;
@@ -36,11 +40,11 @@ void crawler::begin(){
   string none = "";
   int nSeeds = seeds.size();
   for (int i=0; i<nSeeds; i++){
-    thrds.push_back(thread(crawl, seeds[i]));
+    thrds.push_back(thread(crawl, seeds[i], i));
   }
 
   for (int i=nSeeds; i<NTHREADS; i++){
-    thrds.push_back(thread(crawl, none));
+    thrds.push_back(thread(crawl, none, i));
   }
 
   for (int i=0; i<NTHREADS; i++){
@@ -48,96 +52,112 @@ void crawler::begin(){
   }
 }
 
-void crawler::crawl(string seedUrl){
+void crawler::crawl(string seedUrl, int id){
   CkSpider spider;
+  //cout << "thread " << id << " iniciou!\n";
   fileManager fm(this_thread::get_id());
   //signal(SIGPIPE, SIG_IGN);
-  //queue<url> shortTermScheduler;
+  queue<url> shortTermScheduler;
   // ofstream file;
   // string filename = "/htmls.txt";
   if(seedUrl.size() != 0){
     string seedDomain = getUrlDomain(seedUrl);
-    url pato(seedUrl, seedDomain);
+    url pato(seedUrl, seedDomain,0);
     mutexQueue.lock();
-    sc.addInbound(pato);
+    sc.addOutbound(pato);
     mutexQueue.unlock();
   }
 
-
   while (true){
-    mutexQueue.lock();
-    url bla = sc.getUrl();
-    mutexQueue.unlock();
-    bool got = bla.checkValid();
-    if (got){
-      string a = bla.getName();
-      spider.Initialize(a.c_str());//asd.getString());
-      spider.AddUnspidered(a.c_str());
-      if (spider.CrawlNext()){
-        mutexNPages.lock();
-        nPages++;
-        cout << "nPages: " << nPages << endl;
-        mutexNPages.unlock();
-        string andre = spider.lastUrl();
-        mutexCrawled.lock();
+    for (int i=0;i<20;i++){
+      mutexCrawled.lock();
+      mutexQueue.lock();
+      url bla = sc.getUrl();
+      mutexQueue.unlock();
+      mutexCrawled.unlock();
+      shortTermScheduler.push(bla);
+    }
+    while (!shortTermScheduler.empty()){//for (int i=0;i<20;i++){
+      url bla = shortTermScheduler.front();
+      shortTermScheduler.pop();
+      bool got = bla.checkValid();
+      // cout << "oi\n";
+      if (got){
+        // cout << "oigot\n";
+        string andre = bla.getName();
         string andDom = getUrlDomain(andre);
+
+        mutexCrawled.lock();
         sc.addCrawledDomain(andDom);
         mutexCrawled.unlock();
-        //file << andre << "\n";
-        //cout << andre << " threadid: " << this_thread::get_id() << "\n";
-        CkString html;
-        spider.get_LastHtml(html);
-        string htmlStr = html.getString();
-        fm.writeHtml(andre,htmlStr);
-        //file << html.getString();
+        // if (id == chamada%NTHREADS){
+        //   cout << "thread " << id << " presente!\n";
+        //   chamada++;
+        //   cout << "novaChamada: " << chamada << endl;
+        // }
+        spider.Initialize(andre.c_str());//asd.getString());
+        spider.AddUnspidered(andre.c_str());
+        if (spider.CrawlNext()){
+          mutexNPages.lock();
+          nPages++;
+          cout << "nPages: " << nPages << endl;
+          mutexNPages.unlock();
+          //file << andre << "\n";
+          cout << andre << "\n";// << " threadid: " << this_thread::get_id() << "\n";
+          CkString html;
+          spider.get_LastHtml(html);
+          string htmlStr = html.getString();
+          fm.writeHtml(andre,htmlStr);
+          //file << html.getString();
 
-        int nOut = spider.get_NumOutboundLinks();
-        int nUnsp= spider.get_NumUnspidered();
-        //cout << "nUnsp: " << nUnsp << " nOut: " << nOut << endl;
-        for (int i=0; i<nOut; i++){
-          CkString nxt;
-          spider.GetOutboundLink(i, nxt);
-          string nextUrl = nxt.getString();
-          int nextSize = nextUrl.size();
-          if ((nextSize < 100) && (nextSize > 10) && (isBr(nextUrl) > 0)){// && (isBr(nextUrl) > 0)
-            if (nextUrl.back() != '/') nextUrl.push_back('/');
-            string nxtDom = getUrlDomain(nextUrl);
-            mutexCrawled.lock();
-            if (!sc.checkCrawled(nextUrl)){
-              url prox(nextUrl, nxtDom);
-              sc.addCrawledUrl(nextUrl);
-              mutexQueue.lock();
-              sc.addOutbound(prox);
-              mutexQueue.unlock();
+          int nOut = spider.get_NumOutboundLinks();
+          int nUnsp= spider.get_NumUnspidered();
+          //cout << "nUnsp: " << nUnsp << " nOut: " << nOut << endl;
+          for (int i=0; i<nOut; i++){
+            CkString nxt;
+            spider.GetOutboundLink(i, nxt);
+            string nextUrl = nxt.getString();
+            int nextSize = nextUrl.size();
+            if ((nextSize < 100) && (nextSize > 10)){// && (isBr(nextUrl) > 0)){// && (isBr(nextUrl) > 0)
+              if (nextUrl.back() != '/') nextUrl.push_back('/');
+              string nxtDom = getUrlDomain(nextUrl);
+              mutexCrawled.lock();
+              if (!sc.checkCrawled(nextUrl)){
+                url prox(nextUrl, nxtDom, i);
+                sc.addCrawledUrl(nextUrl);
+                mutexQueue.lock();
+                sc.addOutbound(prox);
+                mutexQueue.unlock();
+              }
+              mutexCrawled.unlock();
             }
-            mutexCrawled.unlock();
           }
-        }
-        spider.ClearOutboundLinks();
+          spider.ClearOutboundLinks();
 
-        for (int i=0; i<nUnsp; i++){
-          CkString nxt;
-          spider.GetUnspideredUrl(0, nxt);
-          string nxtUrl = nxt.getString();
-          int nextSize = nxtUrl.size();
-          if ((nextSize < 100) && (nextSize > 10)){// && (isBr(nxtUrl) > 0)){
-            if (nxtUrl.back() != '/') nxtUrl.push_back('/');
-            string nxtDom = getUrlDomain(nxtUrl);
-            mutexCrawled.lock();
-            if (!sc.checkCrawled(nxtUrl)){
-              url prox(nxtUrl, nxtDom);
-              mutexQueue.lock();
-              sc.addCrawledUrl(nxtUrl);
-              sc.addInbound(prox);
-              mutexQueue.unlock();
+          for (int i=0; i<nUnsp; i++){
+            CkString nxt;
+            spider.GetUnspideredUrl(0, nxt);
+            string nxtUrl = nxt.getString();
+            int nextSize = nxtUrl.size();
+            if ((nextSize < 100) && (nextSize > 10)){// && (isBr(nxtUrl) > 0)){
+              if (nxtUrl.back() != '/') nxtUrl.push_back('/');
+              string nxtDom = getUrlDomain(nxtUrl);
+              mutexCrawled.lock();
+              if (!sc.checkCrawled(nxtUrl)){
+                url prox(nxtUrl, nxtDom, i*10);
+                mutexQueue.lock();
+                sc.addCrawledUrl(nxtUrl);
+                sc.addOutbound(prox);
+                mutexQueue.unlock();
+              }
+              mutexCrawled.unlock();
             }
-            mutexCrawled.unlock();
+            spider.SkipUnspidered(0);
           }
-          spider.SkipUnspidered(0);
         }
       }
     }
-  }
+}
   // file.close();
 }
 

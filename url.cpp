@@ -3,10 +3,10 @@
 #include <iostream>
 using namespace std;
 
-url::url(string &nm, string &dm){
+url::url(string &nm, string &dm, int offset){
   name = nm;
   domain = dm;
-  setWeight(nm);
+  setWeight(nm,offset);
   setValid(nm);
 }
 
@@ -37,11 +37,12 @@ void url::increaseWeight(){
   weight+=5;
 }
 
-void url::setWeight(string &name){
+void url::setWeight(string &name, int offset){
   weight = 0;
   for (char c: name){
     if (c == '.') weight++;
     if (c == '/') weight++;
   }
   weight*=10;
+  weight+=offset;
 }

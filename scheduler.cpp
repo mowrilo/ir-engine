@@ -23,10 +23,12 @@ bool scheduler::addInbound(url a){
 
 url scheduler::getUrl(){
   int timeSec = clock()/CLOCKS_PER_SEC;
+  ctrlInOut = 1;
   if (ctrlInOut%3 == 0){// || (whichUrl < 10))
     if (inbound.empty()){
       string no = "";
-      url notValid(no,no);
+      // cout << "Returning not valid because of empty heap\n";
+      url notValid(no,no,0);
       ctrlInOut++;
       return notValid;
     }
@@ -38,7 +40,8 @@ url scheduler::getUrl(){
     if ((it != crawledDomains.end()) && (timeSec < it->second + 30)){
       inb.increaseWeight();
       string no = "";
-      url notValid(no,no);
+      // cout << "Returning not valid because of time\n";
+      url notValid(no,no,0);
       ctrlInOut++;
       return notValid;
     }
@@ -50,7 +53,8 @@ url scheduler::getUrl(){
   else{
     if (outbound.empty()){
       string no = "";
-      url notValid(no,no);
+      // cout << "Returning not valid because of empty heap\n";
+      url notValid(no,no,0);
       ctrlInOut++;
       return notValid;
     }
@@ -64,7 +68,8 @@ url scheduler::getUrl(){
         outbound.pop();
         outbound.push(outb);
         string no = "";
-        url notValid(no,no);
+        // cout << "Returning not valid because of time\n";
+        url notValid(no,no,0);
         ctrlInOut++;
         return notValid;
     }
@@ -100,6 +105,7 @@ bool scheduler::addOutbound(url a){
 
 void scheduler::addCrawledDomain(string &domain){
   int keyDomain = hashFunc(domain);
+  // cout << "dominio: " << domain << " chave: " << keyDomain << endl;
   int timeSec = clock()/CLOCKS_PER_SEC;
   unordered_map<int, double>::iterator it;
   it = crawledDomains.find(keyDomain);
