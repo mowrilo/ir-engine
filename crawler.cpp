@@ -100,6 +100,12 @@ void crawler::crawl(string seedUrl, int id){
         string andre = bla.getName();
         string andDom = bla.getDomain();
         // if (id == chamada%NTHREADS){
+        mutexCrawledDomains.lock();
+        mutexCrawledPages.lock();
+        sc.addCrawledDomain(andDom);
+        sc.addCrawledUrl(andre);
+        mutexCrawledPages.unlock();
+        mutexCrawledDomains.unlock();
         //   cout << "thread " << id << " presente!\n";
         //   chamada++;
         //   cout << "novaChamada: " << chamada << endl;
@@ -107,12 +113,6 @@ void crawler::crawl(string seedUrl, int id){
         spider.Initialize(andre.c_str());//asd.getString());
         spider.AddUnspidered(andre.c_str());
         if (spider.CrawlNext()){
-          mutexCrawledDomains.lock();
-          mutexCrawledPages.lock();
-          sc.addCrawledDomain(andDom);
-          sc.addCrawledUrl(andre);
-          mutexCrawledPages.unlock();
-          mutexCrawledDomains.unlock();
           // if (nPages%100 == 0){
           //   mutexNPages.lock();
           //   cout << "nPages: " << nPages << endl;
@@ -121,10 +121,10 @@ void crawler::crawl(string seedUrl, int id){
           // mutexNPages.lock();
           // nPages++;
           npgs++;
-          if((npgs%10 == 0) && (limQueue<20))  limQueue++;
+          if((npgs%10 == 0) && (limQueue<10))  limQueue++;
           // mutexNPages.unlock();
           //file << andre << "\n";
-          //cout << andre << "\n";// << " threadid: " << this_thread::get_id() << "\n";
+          cout << andre << "\n";// << " threadid: " << this_thread::get_id() << "\n";
           CkString html;
           spider.get_LastHtml(html);
           string htmlStr = html.getString();

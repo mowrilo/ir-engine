@@ -3,7 +3,7 @@
 #include "scheduler.hpp"
 
 #define MAXURL 1000
-#define MAXQUEUE 3000
+#define MAXQUEUE 1000000
 
 using namespace std;
 
