@@ -10,7 +10,7 @@ class url{
         string getDomain();
         void setValid(string &name);
         bool checkValid();
-        void increaseWeight();
+        void increaseWeight(int i);
         bool operator<(const url& a) const;
 
   private:

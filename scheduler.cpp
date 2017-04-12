@@ -27,7 +27,7 @@ url scheduler::getUrl(){
   if (ctrlInOut%3 == 0){// || (whichUrl < 10))
     if (inbound.empty()){
       string no = "";
-      // cout << "Returning not valid because of empty heap\n";
+      // cout << rand() << "Returning not valid because of empty heap\n";
       url notValid(no,no,0);
       ctrlInOut++;
       return notValid;
@@ -38,9 +38,9 @@ url scheduler::getUrl(){
     int key = hashFunc(dom);
     unordered_map<int, double>::iterator it = crawledDomains.find(key);
     if ((it != crawledDomains.end()) && (timeSec < it->second + 30)){
-      inb.increaseWeight();
+      inb.increaseWeight(20);
       string no = "";
-      // cout << "Returning not valid because of time\n";
+      // cout << rand() << "Returning not valid in because of time\n";
       url notValid(no,no,0);
       ctrlInOut++;
       return notValid;
@@ -53,7 +53,7 @@ url scheduler::getUrl(){
   else{
     if (outbound.empty()){
       string no = "";
-      // cout << "Returning not valid because of empty heap\n";
+      // cout << rand() << "Returning not valid because of empty heap\n";
       url notValid(no,no,0);
       ctrlInOut++;
       return notValid;
@@ -61,14 +61,15 @@ url scheduler::getUrl(){
     url outb = outbound.top();
     string dom = outb.getDomain();
     // cout << "trying outbound domain " << dom << endl;
+    // cout << "trying outbound domain " << dom << endl;
     int key = hashFunc(dom);
     unordered_map<int, double>::iterator it = crawledDomains.find(key);
     if ((it != crawledDomains.end()) && (timeSec < (it->second + 30))){
-        outb.increaseWeight();
+        outb.increaseWeight(20);
         outbound.pop();
         outbound.push(outb);
         string no = "";
-        // cout << "Returning not valid because of time\n";
+        // cout << rand() << "Returning not valid out because of time\n";
         url notValid(no,no,0);
         ctrlInOut++;
         return notValid;

@@ -1,6 +1,6 @@
 #include "filemanager.hpp"
 using namespace std;
-fileManager::fileManager(thread::id threadId){
+fileManager::fileManager(int threadId){
   stringstream ss;
   ss << "htmls/" << threadId;// << "/";
   path = ss.str();
@@ -23,13 +23,14 @@ void fileManager::writeHtml(string &url, string &html){
   if(nFiles%NHTML == 0){
     if (nFiles != 0){
       file << "|||";
+      ss.flush();
       file.close();
     }
     fileName = generateFileName();
     file.open(fileName,fstream::app);
   }
   // cout << "writing html on path " << path << " on file " << fileName << " of url " << url << endl;
-  stringstream ss;
+  //stringstream ss;
   formatHtml(html);
   ss << "||| " << url << " | " << html << " ";
   if (nFiles%50 == 49)  file << ss.str();

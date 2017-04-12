@@ -1,6 +1,6 @@
 #include "crawler.hpp"
 
-#define NTHREADS 200
+#define NTHREADS 80
 
 //FAZER A FILA INTERNA
 
@@ -10,6 +10,7 @@ mutex crawler::mutexCrawledDomains;
 mutex crawler::mutexCrawledPages;
 mutex crawler::mutexNPages;
 vector<string> crawler::domainTypes;
+vector<string> crawler::ignoreTypes;
 int crawler::nPages;
 int crawler::chamada;
 
@@ -25,7 +26,8 @@ crawler::crawler(string &path){
   while (file >> seedUrl){
     seeds.push_back(seedUrl);
   }
-  domainTypes = {".com",".net",".gov",".org",".int",".edu",".mil",".blog",".info"};
+  domainTypes = {".com",".de",".uk",".au",".us",".ar",".net",".gov",".org",".int",".edu",".mil",".blog",".info"};
+  ignoreTypes = {".cn",".tv",".mp3",".wma",".wav","stream","live","porn","sex","xxx"};
 }
 
 int crawler::isBr(string &url){
@@ -55,8 +57,12 @@ void crawler::begin(){
 
 void crawler::crawl(string seedUrl, int id){
   CkSpider spider;
+  int npgs = 0;
+  int limQueue = 1;
+  // priority_queue<url, deque<url>> inboundQueue;
+  // priority_queue<url, deque<url>> outboundQeue;
   //cout << "thread " << id << " iniciou!\n";
-  fileManager fm(this_thread::get_id());
+  fileManager fm(id);
   //signal(SIGPIPE, SIG_IGN);
   queue<url> shortTermScheduler;
   // ofstream file;
@@ -70,26 +76,29 @@ void crawler::crawl(string seedUrl, int id){
   }
 
   while (true){
-    for (int i=0;i<20;i++){
-      mutexCrawledDomains.lock();
-      mutexQueue.lock();
+    mutexCrawledDomains.lock();
+    mutexQueue.lock();
+    for (int i=0;i<limQueue;i++){
       url bla = sc.getUrl();
-      mutexQueue.unlock();
-      mutexCrawledDomains.unlock();
-      shortTermScheduler.push(bla);
+      if (bla.checkValid()) shortTermScheduler.push(bla);
     }
+   // if (chamada == id){
+    //   cout << "thread presente " << id << endl;
+    //   chamada++;
+    // }
+    mutexQueue.unlock();
+    mutexCrawledDomains.unlock();
     while (!shortTermScheduler.empty()){//for (int i=0;i<20;i++){
+      // cout << "got urls\n";
       url bla = shortTermScheduler.front();
       shortTermScheduler.pop();
-      bool got = bla.checkValid();
+      // bool got = bla.checkValid();
       // cout << "oi\n";
-      if (got){
+      // if (got){
+        // cout << "not empty\n";
         // cout << "oigot\n";
         string andre = bla.getName();
         string andDom = bla.getDomain();
-        mutexCrawledDomains.lock();
-        sc.addCrawledDomain(andDom);
-        mutexCrawledDomains.unlock();
         // if (id == chamada%NTHREADS){
         //   cout << "thread " << id << " presente!\n";
         //   chamada++;
@@ -98,12 +107,24 @@ void crawler::crawl(string seedUrl, int id){
         spider.Initialize(andre.c_str());//asd.getString());
         spider.AddUnspidered(andre.c_str());
         if (spider.CrawlNext()){
-          mutexNPages.lock();
-          nPages++;
-          cout << "nPages: " << nPages << endl;
-          mutexNPages.unlock();
+          mutexCrawledDomains.lock();
+          mutexCrawledPages.lock();
+          sc.addCrawledDomain(andDom);
+          sc.addCrawledUrl(andre);
+          mutexCrawledPages.unlock();
+          mutexCrawledDomains.unlock();
+          // if (nPages%100 == 0){
+          //   mutexNPages.lock();
+          //   cout << "nPages: " << nPages << endl;
+          //   mutexNPages.unlock();
+          // }
+          // mutexNPages.lock();
+          // nPages++;
+          npgs++;
+          if((npgs%10 == 0) && (limQueue<20))  limQueue++;
+          // mutexNPages.unlock();
           //file << andre << "\n";
-          cout << andre << "\n";// << " threadid: " << this_thread::get_id() << "\n";
+          //cout << andre << "\n";// << " threadid: " << this_thread::get_id() << "\n";
           CkString html;
           spider.get_LastHtml(html);
           string htmlStr = html.getString();
@@ -119,7 +140,8 @@ void crawler::crawl(string seedUrl, int id){
             string nextUrl = nxt.getString();
             int nextSize = nextUrl.size();
             bool isbra = (isBr(nextUrl) > 0);
-            if ((nextSize < 100) && (nextSize > 10) && (isbra)){// && (isBr(nextUrl) > 0)
+            bool isSecure = mustIgnore(nextUrl);
+            if ((nextSize < 100) && (nextSize > 10) && (!isSecure)){//} && (isbra)){// && (isBr(nextUrl) > 0)
               if (nextUrl.back() != '/') nextUrl.push_back('/');
               string nxtDom = getUrlDomain(nextUrl);
               if (nxtDom.size() > 0){
@@ -128,9 +150,9 @@ void crawler::crawl(string seedUrl, int id){
                 mutexCrawledPages.unlock();
                 if (!isCrawled){
                   int wei = i*5;
-                  //if (!isbra)  wei+=500;
+                  if (!isbra)  wei+=500000;
                   url prox(nextUrl, nxtDom, wei);
-                  sc.addCrawledUrl(nextUrl);
+                  //sc.addCrawledUrl(nextUrl);
                   mutexQueue.lock();
                   sc.addOutbound(prox);
                   mutexQueue.unlock();
@@ -153,9 +175,11 @@ void crawler::crawl(string seedUrl, int id){
                 bool isCrawled = sc.checkCrawled(nxtUrl);
                 mutexCrawledPages.unlock();
                 if (!isCrawled){
-                  url prox(nxtUrl, nxtDom, i*8);
+                  url prox(nxtUrl, nxtDom, i*10);
+                  // mutexCrawledPages.lock();
+                  // sc.addCrawledUrl(nxtUrl);
+                  // mutexCrawledPages.unlock();
                   mutexQueue.lock();
-                  sc.addCrawledUrl(nxtUrl);
                   sc.addInbound(prox);
                   mutexQueue.unlock();
                 }
@@ -164,7 +188,7 @@ void crawler::crawl(string seedUrl, int id){
             spider.SkipUnspidered(0);
           }
         }
-      }
+      // }
     }
 }
   // file.close();
@@ -206,6 +230,19 @@ bool crawler::isDomain(string &subUrl){
   return false;
 }
 
-string crawler::normalizeUrl(string &name){
+bool crawler::mustIgnore(string url){
+  for (int i=0; i<ignoreTypes.size();i++){
+    int find = url.find(ignoreTypes[i]);
+    if (find != string::npos) return true;
+  }
+  return false;
+}
 
+string crawler::normalizeUrl(string name){
+  //if (name.back() != '/') name.push_back('/');
+  for (int i=0;i<name.size();i++)  tolower(name[i]);
+    string www = "www.";
+    int find = name.find(www);
+    if (find != string::npos) name.erase(find,4);
+    return name;
 }

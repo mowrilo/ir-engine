@@ -33,17 +33,17 @@ string url::getName(){
 string url::getDomain(){
   return domain;
 }
-void url::increaseWeight(){
-  weight+=5;
+void url::increaseWeight(int i){
+  weight+=i;
 }
 
 int url::setWeight(string &name, int offset){
-  int weight = 0;
+  int peso = 0;
   for (char c: name){
-    if (c == '.') weight++;
-    if (c == '/') weight++;
+    if (c == '.') peso++;
+    if (c == '/') peso++;
   }
-  weight*=10;
-  weight+=offset;
-  return weight;
+  peso*=10;
+  peso+=offset;
+  return peso;
 }

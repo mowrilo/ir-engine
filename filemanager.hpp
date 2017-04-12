@@ -10,7 +10,7 @@ using namespace std;
 
 class fileManager{
 public:
-    fileManager(thread::id threadId);
+    fileManager(int threadId);
     void formatHtml(string &html);
     string generateFileName();
     void writeHtml(string &url, string &html);
@@ -20,4 +20,5 @@ private:
     string path;
     string fileName;
     fstream file;
+    stringstream ss;
 };

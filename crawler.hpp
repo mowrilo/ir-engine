@@ -18,9 +18,10 @@ class crawler{
         void begin();
         static void crawl(string seedUrl, int id);
         static string getUrlDomain(string &url);
-        static string normalizeUrl(string &name);
+        static string normalizeUrl(string name);
         static int isBr(string &domain);
         static bool isDomain(string &subUrl);
+        static bool mustIgnore(string url);
 
   private:
         static int nPages;
@@ -32,5 +33,6 @@ class crawler{
         static mutex mutexNPages;
         vector<string> seeds;
         static vector<string> domainTypes;
+        static vector<string> ignoreTypes;
         static int chamada;
 };
