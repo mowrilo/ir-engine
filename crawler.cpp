@@ -71,23 +71,28 @@ void crawler::crawl(string seedUrl, int id){
     string seedDomain = getUrlDomain(seedUrl);
     url pato(seedUrl, seedDomain,0);
     mutexQueue.lock();
-    sc.addInbound(pato);
+    sc.addOutbound(pato);
     mutexQueue.unlock();
+    // if (id<5) cout << "addseed\n";
   }
 
   while (true){
     mutexCrawledDomains.lock();
     mutexQueue.lock();
-    for (int i=0;i<limQueue;i++){
+    for (int i=0;i<1;i++){
       url bla = sc.getUrl();
-      if (bla.checkValid()) shortTermScheduler.push(bla);
+      if (bla.checkValid()){
+        shortTermScheduler.push(bla);
+        if (id<5) cout << bla.getName() << " entroutrue\n";
+      }
     }
+    mutexQueue.unlock();
+    mutexCrawledDomains.unlock();
    // if (chamada == id){
     //   cout << "thread presente " << id << endl;
     //   chamada++;
     // }
-    mutexQueue.unlock();
-    mutexCrawledDomains.unlock();
+    // cout << "o igot\n";
     while (!shortTermScheduler.empty()){//for (int i=0;i<20;i++){
       // cout << "got urls\n";
       url bla = shortTermScheduler.front();
@@ -96,7 +101,6 @@ void crawler::crawl(string seedUrl, int id){
       // cout << "oi\n";
       // if (got){
         // cout << "not empty\n";
-        // cout << "oigot\n";
         string andre = bla.getName();
         string andDom = bla.getDomain();
         // if (id == chamada%NTHREADS){
@@ -175,12 +179,13 @@ void crawler::crawl(string seedUrl, int id){
                 bool isCrawled = sc.checkCrawled(nxtUrl);
                 mutexCrawledPages.unlock();
                 if (!isCrawled){
-                  url prox(nxtUrl, nxtDom, i*10);
+                  url prox(nxtUrl, nxtDom, i*100);
                   // mutexCrawledPages.lock();
                   // sc.addCrawledUrl(nxtUrl);
                   // mutexCrawledPages.unlock();
+                  // cout << "adding " << nxtUrl << endl;
                   mutexQueue.lock();
-                  sc.addInbound(prox);
+                  sc.addOutbound(prox);
                   mutexQueue.unlock();
                 }
               }

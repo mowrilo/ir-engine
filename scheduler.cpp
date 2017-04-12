@@ -23,39 +23,11 @@ bool scheduler::addInbound(url a){
 
 url scheduler::getUrl(){
   int timeSec = clock()/CLOCKS_PER_SEC;
-  // ctrlInOut = 1;
-  if (ctrlInOut%3 == 0){// || (whichUrl < 10))
-    if (inbound.empty()){
-      string no = "";
-      // cout << rand() << "Returning not valid because of empty heap\n";
-      url notValid(no,no,0);
-      ctrlInOut++;
-      return notValid;
-    }
-    url inb = inbound.top();
-    string dom = inb.getDomain();
-    // cout << "trying inbound domain " << dom << endl;
-    int key = hashFunc(dom);
-    unordered_map<int, double>::iterator it = crawledDomains.find(key);
-    if ((it != crawledDomains.end()) && (timeSec < it->second + 30)){
-      inb.increaseWeight(20);
-      string no = "";
-      // cout << rand() << "Returning not valid in because of time\n";
-      url notValid(no,no,0);
-      ctrlInOut++;
-      return notValid;
-    }
-    inbound.pop();
-    whichUrl++;
-    ctrlInOut = rand()%3;
-    return inb;
-  }
-  else{
     if (outbound.empty()){
       string no = "";
-      // cout << rand() << "Returning not valid because of empty heap\n";
+      cout << rand() << "Returning not valid because of empty heap\n";
       url notValid(no,no,0);
-      ctrlInOut++;
+      // ctrlInOut++;
       return notValid;
     }
     url outb = outbound.top();
@@ -65,20 +37,20 @@ url scheduler::getUrl(){
     int key = hashFunc(dom);
     unordered_map<int, double>::iterator it = crawledDomains.find(key);
     if ((it != crawledDomains.end()) && (timeSec < (it->second + 30))){
-        outb.increaseWeight(20);
+        outb.increaseWeight(11);
         outbound.pop();
         outbound.push(outb);
         string no = "";
         // cout << rand() << "Returning not valid out because of time\n";
         url notValid(no,no,0);
-        ctrlInOut++;
+        // ctrlInOut++;
         return notValid;
     }
     outbound.pop();
     whichUrl++;
-    ctrlInOut = rand()%3;
+    // ctrlInOut = rand()%3;
     return outb;
-  }
+  // }
 }
 vector<int> scheduler::genWeightsHash(){
   vector<int> wei;

@@ -34,13 +34,13 @@ string url::getDomain(){
   return domain;
 }
 void url::increaseWeight(int i){
-  weight+=i;
+  weight*=i;
 }
 
 int url::setWeight(string &name, int offset){
   int peso = 0;
   for (char c: name){
-    if (c == '.') peso++;
+    //if (c == '.') peso++;
     if (c == '/') peso++;
   }
   peso*=10;
