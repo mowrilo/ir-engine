@@ -79,11 +79,11 @@ void crawler::crawl(string seedUrl, int id){
   while (true){
     mutexCrawledDomains.lock();
     mutexQueue.lock();
-    for (int i=0;i<1;i++){
+    for (int i=0;i<limQueue;i++){
       url bla = sc.getUrl();
       if (bla.checkValid()){
         shortTermScheduler.push(bla);
-        if (id<5) cout << bla.getName() << " entroutrue\n";
+        //if (id<5) cout << bla.getName() << " entroutrue\n";
       }
     }
     mutexQueue.unlock();
@@ -103,11 +103,12 @@ void crawler::crawl(string seedUrl, int id){
         // cout << "not empty\n";
         string andre = bla.getName();
         string andDom = bla.getDomain();
+        string andreNorm = normalizeUrl(andre);
         // if (id == chamada%NTHREADS){
         mutexCrawledDomains.lock();
         mutexCrawledPages.lock();
         sc.addCrawledDomain(andDom);
-        sc.addCrawledUrl(andre);
+        sc.addCrawledUrl(andreNorm);
         mutexCrawledPages.unlock();
         mutexCrawledDomains.unlock();
         //   cout << "thread " << id << " presente!\n";
@@ -118,14 +119,14 @@ void crawler::crawl(string seedUrl, int id){
         spider.AddUnspidered(andre.c_str());
         if (spider.CrawlNext()){
           // if (nPages%100 == 0){
-          //   mutexNPages.lock();
-          //   cout << "nPages: " << nPages << endl;
-          //   mutexNPages.unlock();
+            // mutexNPages.lock();
+            // cout << "nPages: " << nPages << endl;
           // }
           // mutexNPages.lock();
-          // nPages++;
+          //nPages++;
+          // mutexNPages.unlock();
           npgs++;
-          if((npgs%10 == 0) && (limQueue<10))  limQueue++;
+          if((npgs%10 == 0) && (limQueue<20))  limQueue++;
           // mutexNPages.unlock();
           //file << andre << "\n";
           cout << andre << "\n";// << " threadid: " << this_thread::get_id() << "\n";
@@ -246,8 +247,8 @@ bool crawler::mustIgnore(string url){
 string crawler::normalizeUrl(string name){
   //if (name.back() != '/') name.push_back('/');
   for (int i=0;i<name.size();i++)  tolower(name[i]);
-    string www = "www.";
-    int find = name.find(www);
-    if (find != string::npos) name.erase(find,4);
-    return name;
+  string www = "www.";
+  int find = name.find(www);
+  if (find != string::npos) name.erase(find,4);
+  return name;
 }

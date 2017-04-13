@@ -19,6 +19,8 @@ private:
     int nFiles;
     string path;
     string fileName;
+    // string indexName;
     fstream file;
-    stringstream ss;
+    // fstream index;
+    string pages;
 };

@@ -25,7 +25,7 @@ url scheduler::getUrl(){
   int timeSec = clock()/CLOCKS_PER_SEC;
     if (outbound.empty()){
       string no = "";
-      cout << rand() << "Returning not valid because of empty heap\n";
+      // cout << rand() << "Returning not valid because of empty heap\n";
       url notValid(no,no,0);
       // ctrlInOut++;
       return notValid;
