@@ -22,12 +22,43 @@ bool scheduler::addInbound(url a){
 }
 
 url scheduler::getUrl(){
-  int timeSec = clock()/CLOCKS_PER_SEC;
+  clock_t timeSec = clock()/CLOCKS_PER_SEC;
+  // int ctrl = rand()%4;
+  // if (ctrlInOut%3 == 0){
+  //   if (inbound.empty()){
+  //     string no = "";
+  //     // cout << rand() << "Returning not valid because of empty heap\n";
+  //     url notValid(no,no,0);
+  //     ctrlInOut++;
+  //     return notValid;
+  //   }
+  //   url inb = inbound.top();
+  //   string dom = inb.getDomain();
+  //   // cout << "trying outbound domain " << dom << endl;
+  //   // cout << "trying outbound domain " << dom << endl;
+  //   int key = hashFunc(dom);
+  //   unordered_map<int, clock_t>::iterator it = crawledDomains.find(key);
+  //   if ((it != crawledDomains.end()) && (timeSec < (it->second + 30))){
+  //       inb.increaseWeight(11);
+  //       inbound.pop();
+  //       inbound.push(inb);
+  //       string no = "";
+  //       // cout << rand() << "Returning not valid out because of time\n";
+  //       url notValid(no,no,0);
+  //       ctrlInOut++;
+  //       return notValid;
+  //   }
+  //   inbound.pop();
+  //   whichUrl++;
+  //   ctrlInOut = rand()%3;
+  //   return inb;
+  // }
+  // else{
     if (outbound.empty()){
       string no = "";
       // cout << rand() << "Returning not valid because of empty heap\n";
       url notValid(no,no,0);
-      // ctrlInOut++;
+      ctrlInOut++;
       return notValid;
     }
     url outb = outbound.top();
@@ -35,7 +66,7 @@ url scheduler::getUrl(){
     // cout << "trying outbound domain " << dom << endl;
     // cout << "trying outbound domain " << dom << endl;
     int key = hashFunc(dom);
-    unordered_map<int, double>::iterator it = crawledDomains.find(key);
+    unordered_map<int, clock_t>::iterator it = crawledDomains.find(key);
     if ((it != crawledDomains.end()) && (timeSec < (it->second + 30))){
         outb.increaseWeight(11);
         outbound.pop();
@@ -43,12 +74,13 @@ url scheduler::getUrl(){
         string no = "";
         // cout << rand() << "Returning not valid out because of time\n";
         url notValid(no,no,0);
-        // ctrlInOut++;
+        ctrlInOut++;
         return notValid;
     }
     outbound.pop();
     whichUrl++;
     // ctrlInOut = rand()%3;
+    if (it != crawledDomains.end()) it->second = timeSec;
     return outb;
   // }
 }
@@ -79,8 +111,8 @@ bool scheduler::addOutbound(url a){
 void scheduler::addCrawledDomain(string &domain){
   int keyDomain = hashFunc(domain);
   // cout << "dominio: " << domain << " chave: " << keyDomain << endl;
-  int timeSec = clock()/CLOCKS_PER_SEC;
-  unordered_map<int, double>::iterator it;
+  clock_t timeSec = clock()/CLOCKS_PER_SEC;
+  unordered_map<int, clock_t>::iterator it;
   it = crawledDomains.find(keyDomain);
   if (it != crawledDomains.end()) { //se o dominio existir na hash
       it->second = timeSec;
@@ -105,5 +137,7 @@ bool scheduler::checkEmpty(){
 
 bool scheduler::checkCrawled(string &name){
   int key = hashFunc(name);
-  return crawledPages.find(key) != crawledPages.end();
+  unordered_set<int>::iterator it = crawledPages.find(key);
+  if (it != crawledPages.end()) return true;
+  return false;
 }

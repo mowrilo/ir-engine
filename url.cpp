@@ -44,7 +44,7 @@ int url::setWeight(string &name, int offset){
     if (c == '.') peso++;
     if (c == '/') peso++;
   }
-  peso*=10;
+  peso*=17;
   peso+=offset;
   return peso;
 }

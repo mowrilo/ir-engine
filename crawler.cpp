@@ -26,8 +26,8 @@ crawler::crawler(string &path){
   while (file >> seedUrl){
     seeds.push_back(seedUrl);
   }
-  domainTypes = {".com",".de",".uk",".au",".us",".ar",".net",".gov",".org",".int",".edu",".mil",".blog",".info"};
-  ignoreTypes = {".cn",".tv",".mp3",".wma",".wav","stream","live","porn","sex","xxx"};
+  domainTypes = {".com",".fr",".it",".hn",".ca"".de",".uk",".jp",".cn","",".au",".us",".ar",".net",".gov",".org",".int",".edu",".mil",".blog",".info"};
+  ignoreTypes = {"quora","{{",".tv",".mp3",".wma",".wav","stream","live","porn","sex","xxx","sexy","@"};
 }
 
 int crawler::isBr(string &url){
@@ -41,6 +41,8 @@ int crawler::isBr(string &url){
 void crawler::begin(){
   vector<thread> thrds;
   string none = "";
+  clock_t tempo1 = clock()/CLOCKS_PER_SEC;
+  //cout << "process terminated after " << tempo << "seconds\n";
   int nSeeds = seeds.size();
   for (int i=0; i<nSeeds; i++){
     thrds.push_back(thread(crawl, seeds[i], i));
@@ -52,7 +54,10 @@ void crawler::begin(){
 
   for (int i=0; i<NTHREADS; i++){
     thrds[i].join();
+    cout << "joining thread " << i << "...\n";
   }
+  clock_t tempo2 = clock()/CLOCKS_PER_SEC;
+  cout << "process terminated after " << (tempo2-tempo1) << "seconds\n";
 }
 
 void crawler::crawl(string seedUrl, int id){
@@ -104,97 +109,108 @@ void crawler::crawl(string seedUrl, int id){
         string andre = bla.getName();
         string andDom = bla.getDomain();
         string andreNorm = normalizeUrl(andre);
-        // if (id == chamada%NTHREADS){
-        mutexCrawledDomains.lock();
+        bool visited;
         mutexCrawledPages.lock();
-        sc.addCrawledDomain(andDom);
-        sc.addCrawledUrl(andreNorm);
+        visited = sc.checkCrawled(andreNorm);
         mutexCrawledPages.unlock();
-        mutexCrawledDomains.unlock();
-        //   cout << "thread " << id << " presente!\n";
-        //   chamada++;
-        //   cout << "novaChamada: " << chamada << endl;
-        // }
-        spider.Initialize(andre.c_str());//asd.getString());
-        spider.AddUnspidered(andre.c_str());
-        if (spider.CrawlNext()){
-          // if (nPages%100 == 0){
-            // mutexNPages.lock();
-            // cout << "nPages: " << nPages << endl;
+        if (!visited){
+          // if (id == chamada%NTHREADS){
+          mutexCrawledDomains.lock();
+          mutexCrawledPages.lock();
+          sc.addCrawledDomain(andDom);
+          sc.addCrawledUrl(andreNorm);
+          mutexCrawledPages.unlock();
+          mutexCrawledDomains.unlock();
+          //   cout << "thread " << id << " presente!\n";
+          //   chamada++;
+          //   cout << "novaChamada: " << chamada << endl;
           // }
-          // mutexNPages.lock();
-          //nPages++;
-          // mutexNPages.unlock();
-          npgs++;
-          if((npgs%10 == 0) && (limQueue<20))  limQueue++;
-          // mutexNPages.unlock();
-          //file << andre << "\n";
-          cout << andre << "\n";// << " threadid: " << this_thread::get_id() << "\n";
-          CkString html;
-          spider.get_LastHtml(html);
-          string htmlStr = html.getString();
-          fm.writeHtml(andre,htmlStr);
-          //file << html.getString();
+          spider.Initialize(andre.c_str());//asd.getString());
+          spider.AddUnspidered(andre.c_str());
+          if (spider.CrawlNext()){
+            // if (nPages%100 == 0){
+              // mutexNPages.lock();
+              // cout << "nPages: " << nPages << endl;
+            // }
+            // mutexNPages.lock();
+            //nPages++;
+            // mutexNPages.unlock();
+            npgs++;
+            if((npgs%10 == 0) && (limQueue<50))  limQueue++;
+            // mutexNPages.unlock();
+            //file << andre << "\n";
+            cout << andre << "\n";// << " threadid: " << this_thread::get_id() << "\n";
+            CkString html;
+            spider.get_LastHtml(html);
+            string htmlStr = html.getString();
+            fm.writeHtml(andre,htmlStr);
+            //file << html.getString();
 
-          int nOut = spider.get_NumOutboundLinks();
-          int nUnsp= spider.get_NumUnspidered();
-          //cout << "nUnsp: " << nUnsp << " nOut: " << nOut << endl;
-          for (int i=0; i<nOut; i++){
-            CkString nxt;
-            spider.GetOutboundLink(i, nxt);
-            string nextUrl = nxt.getString();
-            int nextSize = nextUrl.size();
-            bool isbra = (isBr(nextUrl) > 0);
-            bool isSecure = mustIgnore(nextUrl);
-            if ((nextSize < 100) && (nextSize > 10) && (!isSecure)){//} && (isbra)){// && (isBr(nextUrl) > 0)
-              if (nextUrl.back() != '/') nextUrl.push_back('/');
-              string nxtDom = getUrlDomain(nextUrl);
-              if (nxtDom.size() > 0){
-                mutexCrawledPages.lock();
-                bool isCrawled = sc.checkCrawled(nextUrl);
-                mutexCrawledPages.unlock();
-                if (!isCrawled){
-                  int wei = i*5;
-                  if (!isbra)  wei+=500000;
-                  url prox(nextUrl, nxtDom, wei);
-                  //sc.addCrawledUrl(nextUrl);
-                  mutexQueue.lock();
-                  sc.addOutbound(prox);
-                  mutexQueue.unlock();
+            int nOut = spider.get_NumOutboundLinks();
+            int nUnsp= spider.get_NumUnspidered();
+            //cout << "nUnsp: " << nUnsp << " nOut: " << nOut << endl;
+            for (int i=0; i<nOut; i++){
+              CkString nxt;
+              spider.GetOutboundLink(i, nxt);
+              string nextUrl = nxt.getString();
+              int nextSize = nextUrl.size();
+              bool isbra = (isBr(nextUrl) > 0);
+              bool isSecure = mustIgnore(nextUrl);
+              if ((nextSize < 100) && (nextSize > 10) && (!isSecure)){//} && (isbra)){// && (isBr(nextUrl) > 0)
+                if (nextUrl.back() != '/') nextUrl.push_back('/');
+                string nxtDom = getUrlDomain(nextUrl);
+                if (nxtDom.size() > 0){
+                  string nextUrlNorm = normalizeUrl(nextUrl);
+                  mutexCrawledPages.lock();
+                  bool isCrawled = sc.checkCrawled(nextUrlNorm);
+                  // if (!isCrawled) sc.addCrawledUrl(nextUrlNorm);
+                  mutexCrawledPages.unlock();
+                  if (!isCrawled){
+                    int wei = i*5;
+                    if (!isbra)  wei+=99999999;
+                    url prox(nextUrl, nxtDom, wei);
+                    //sc.addCrawledUrl(nextUrl);
+                    mutexQueue.lock();
+                    sc.addOutbound(prox);
+                    mutexQueue.unlock();
+                  }
                 }
               }
             }
-          }
-          spider.ClearOutboundLinks();
+            spider.ClearOutboundLinks();
 
-          for (int i=0; i<nUnsp; i++){
-            CkString nxt;
-            spider.GetUnspideredUrl(0, nxt);
-            string nxtUrl = nxt.getString();
-            int nextSize = nxtUrl.size();
-            if ((nextSize < 100) && (nextSize > 10)){// && (isBr(nxtUrl) > 0)){
-              if (nxtUrl.back() != '/') nxtUrl.push_back('/');
-              string nxtDom = getUrlDomain(nxtUrl);
-              if (nxtDom.size() > 0){
-                mutexCrawledPages.lock();
-                bool isCrawled = sc.checkCrawled(nxtUrl);
-                mutexCrawledPages.unlock();
-                if (!isCrawled){
-                  url prox(nxtUrl, nxtDom, i*100);
-                  // mutexCrawledPages.lock();
-                  // sc.addCrawledUrl(nxtUrl);
-                  // mutexCrawledPages.unlock();
-                  // cout << "adding " << nxtUrl << endl;
-                  mutexQueue.lock();
-                  sc.addOutbound(prox);
-                  mutexQueue.unlock();
+            for (int i=0; i<nUnsp; i++){
+              CkString nxt;
+              spider.GetUnspideredUrl(0, nxt);
+              string nxtUrl = nxt.getString();
+              int nextSize = nxtUrl.size();
+              bool isSecure = mustIgnore(nxtUrl);
+              if ((nextSize < 100) && (nextSize > 10) && (!isSecure)){// && (isBr(nxtUrl) > 0)){
+                if (nxtUrl.back() != '/') nxtUrl.push_back('/');
+                string nxtDom = getUrlDomain(nxtUrl);
+                if (nxtDom.size() > 0){
+                  string nxtUrlNorm = normalizeUrl(nxtUrl);
+                  mutexCrawledPages.lock();
+                  bool isCrawled = sc.checkCrawled(nxtUrlNorm);
+                  // if (!isCrawled) sc.addCrawledUrl(nxtUrlNorm);
+                  mutexCrawledPages.unlock();
+                  if (!isCrawled){
+                    url prox(nxtUrl, nxtDom, i*100);
+                    // mutexCrawledPages.lock();
+                    // sc.addCrawledUrl(nxtUrl);
+                    // mutexCrawledPages.unlock();
+                    // cout << "adding " << nxtUrl << endl;
+                    mutexQueue.lock();
+                    sc.addOutbound(prox);
+                    mutexQueue.unlock();
+                  }
                 }
               }
+              spider.SkipUnspidered(0);
             }
-            spider.SkipUnspidered(0);
           }
-        }
-      // }
+        // }
+      }
     }
 }
   // file.close();

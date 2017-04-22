@@ -8,7 +8,7 @@
 #include "url.hpp"
 using namespace std;
 
-#define MAXLEN  80
+#define MAXLEN  150
 #define MAXDOM  10
 //max size of url (8)
 
@@ -26,11 +26,11 @@ class scheduler{
         bool checkCrawled(string &name);
 
   private:
-        unordered_map<int, double> crawledDomains;
+        unordered_map<int, clock_t> crawledDomains;
         unordered_set<int> crawledPages; //HASH PARA DOMINIO, COM NUM CRAWLED
         vector<int> weights;
         priority_queue<url, deque<url>> inbound;
         priority_queue<url, deque<url>> outbound;
         int whichUrl;
-        int ctrlInOut;
+       int ctrlInOut;
 };
