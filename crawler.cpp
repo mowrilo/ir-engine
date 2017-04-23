@@ -1,6 +1,6 @@
 #include "crawler.hpp"
 
-#define NTHREADS 80
+#define NTHREADS 100
 
 //FAZER A FILA INTERNA
 
@@ -27,7 +27,7 @@ crawler::crawler(string &path){
     seeds.push_back(seedUrl);
   }
   domainTypes = {".com",".fr",".it",".hn",".ca"".de",".uk",".jp",".cn","",".au",".us",".ar",".net",".gov",".org",".int",".edu",".mil",".blog",".info"};
-  ignoreTypes = {"quora","{{",".tv",".mp3",".wma",".wav","stream","live","porn","sex","xxx","sexy","@"};
+  ignoreTypes = {"{{",".tv",".mp3",".wma",".wav","stream","live","porn","sex","xxx","sexy","@"};
 }
 
 int crawler::isBr(string &url){
@@ -110,10 +110,10 @@ void crawler::crawl(string seedUrl, int id){
         string andDom = bla.getDomain();
         string andreNorm = normalizeUrl(andre);
         bool visited;
-        mutexCrawledPages.lock();
-        visited = sc.checkCrawled(andreNorm);
-        mutexCrawledPages.unlock();
-        if (!visited){
+        // mutexCrawledPages.lock();
+        // visited = sc.checkCrawled(andreNorm);
+        // mutexCrawledPages.unlock();
+        // if (!visited){
           // if (id == chamada%NTHREADS){
           mutexCrawledDomains.lock();
           mutexCrawledPages.lock();
@@ -133,7 +133,8 @@ void crawler::crawl(string seedUrl, int id){
               // cout << "nPages: " << nPages << endl;
             // }
             // mutexNPages.lock();
-            //nPages++;
+            // nPages++;
+            // cout << nPages << "\n";
             // mutexNPages.unlock();
             npgs++;
             if((npgs%10 == 0) && (limQueue<50))  limQueue++;
@@ -195,7 +196,7 @@ void crawler::crawl(string seedUrl, int id){
                   // if (!isCrawled) sc.addCrawledUrl(nxtUrlNorm);
                   mutexCrawledPages.unlock();
                   if (!isCrawled){
-                    url prox(nxtUrl, nxtDom, i*100);
+                    url prox(nxtUrl, nxtDom, i*500);
                     // mutexCrawledPages.lock();
                     // sc.addCrawledUrl(nxtUrl);
                     // mutexCrawledPages.unlock();
@@ -210,7 +211,7 @@ void crawler::crawl(string seedUrl, int id){
             }
           }
         // }
-      }
+      // }
     }
 }
   // file.close();

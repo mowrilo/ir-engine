@@ -68,7 +68,7 @@ url scheduler::getUrl(){
     int key = hashFunc(dom);
     unordered_map<int, clock_t>::iterator it = crawledDomains.find(key);
     if ((it != crawledDomains.end()) && (timeSec < (it->second + 30))){
-        outb.increaseWeight(11);
+        outb.increaseWeight(1001);
         outbound.pop();
         outbound.push(outb);
         string no = "";
