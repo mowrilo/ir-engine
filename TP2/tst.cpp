@@ -31,8 +31,8 @@ int main(){
   	//if (it->tagName() == "A")
   	//{
   		it->parseAttributes();
-      pair<bool, string> a = it->attribute("href");
-  		cout << "attribute: " << a.first << "  sec: " << a.second << "\n";
+      pair<bool, string> a = it->attribute("content");
+  		if (a.first)  cout << "attribute: "<< a.second << "\n";
   	//}
   }
   cout << "dump:\n";
@@ -41,9 +41,9 @@ int main(){
   end = dom.end();
   for (; it != end; ++it)
   {
-  	if ((!it->isTag()) && (!it->isComment()))
+  	if ((!it->isComment()))//(it->isTag()) &&
   	{
-  		//cout << it->text() << "\n";
+  		cout << it->tagName() << "\n";
   	}
   }
   fin.close();
