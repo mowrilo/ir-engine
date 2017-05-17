@@ -5,7 +5,7 @@
 using namespace std;
 using namespace htmlcxx;
 
-class indexer {
+class indexer{
   public:
 
   private:
@@ -13,11 +13,20 @@ class indexer {
     unordered_map<string, int> documents;
 }
 
-class tuple {
+class fileReader{
+
+}
+
+class parser{
+
+}
+
+class tuple{
+  public:
+    bool operator<(const tuple& a) const;
 
   private:
     int term;
     int doc;
     int freq;
-    vector<int> pos;
 }
