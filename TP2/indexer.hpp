@@ -28,14 +28,6 @@ class indexer{
     string path_to_files;
 }
 
-class fileReader{
-  public:
-
-
-  private:
-    ifstream file;
-    string path_to_files;
-}
 
 class parser{
   public:
