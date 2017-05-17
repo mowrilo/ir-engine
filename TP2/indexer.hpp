@@ -5,20 +5,44 @@
 using namespace std;
 using namespace htmlcxx;
 
-class indexer{
+class index{
   public:
+    void addTerm
+    void addDocument
+    string getTerm
+    string getDocument
 
   private:
+    mutex voc
+    mutex doc
     unordered_map<string, int> vocabulary;
     unordered_map<string, int> documents;
 }
 
-class fileReader{
+class indexer{
+  public:
+    void index(string path);
+    void start(strint path);
 
+  private:
+    string path_to_files;
+}
+
+class fileReader{
+  public:
+
+
+  private:
+    ifstream file;
+    string path_to_files;
 }
 
 class parser{
+  public:
+    string getTerm;
 
+  private:
+    string html;
 }
 
 class tuple{
