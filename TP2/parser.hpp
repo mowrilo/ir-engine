@@ -11,5 +11,5 @@ class parser{
 
   private:
     string html;
-
+    int ndoc;
 }
