@@ -23,6 +23,7 @@ string fileReader::getNextHtml(){
   cout << "\n";
   //string url = ss.str();
   ss << c;
+  ss.str("");
   file.get(c);
 
   while (c != '|'){

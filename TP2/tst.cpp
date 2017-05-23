@@ -1,9 +1,12 @@
 #include <htmlcxx/html/ParserDom.h>
 #include <bits/stdc++.h>
 
-
 using namespace std;
 using namespace htmlcxx;
+
+bool isJS(string text){
+
+}
 
 int main(){
   ifstream fin;
@@ -31,8 +34,8 @@ int main(){
   	//if (it->tagName() == "A")
   	//{
   		it->parseAttributes();
-      pair<bool, string> a = it->attribute("content");
-  		if (a.first)  cout << "attribute: "<< a.second << "\n";
+      //pair<bool, string> a = it->attribute("content");
+  		//if (a.first)  cout << "attribute: "<< a.second << "\n";
   	//}
   }
   cout << "dump:\n";
@@ -41,9 +44,11 @@ int main(){
   end = dom.end();
   for (; it != end; ++it)
   {
-  	if ((!it->isComment()))//(it->isTag()) &&
+  	if ((!it->isTag()) &&(!it->isComment()))//(it->isTag()) &&
   	{
-  		cout << it->tagName() << "\n";
+  		//cout << "name: " << it->tagName() << "\n";
+      string text = it->text();
+      cout << "size: " << text.size() << " text: " << text << "\n";
   	}
   }
   fin.close();
