@@ -2,13 +2,14 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <vector>
 
 using namespace std;
 
 class fileReader{
   public:
     fileReader(string path, int initNum, int numThreads);
-    string getNextHtml();
+    vector<string> getNextHtml();
     bool openNextFile();
     bool closeFile();
 

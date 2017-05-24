@@ -7,9 +7,30 @@ vocabulary::vocabulary(){
 }
 
 void vocabulary::addTerm(string term){
-  vocab.insert({term, nid});
+  // cout << "Checando termo " << term << "...\n";
+  unordered_map<string, int>::iterator it = vocab.find(term);
+  if (it == vocab.end()){
+    // cout << "Termo não existe no vocabulário! Adicionando...\n";
+    pair<string, int> entrada(term,idMax);
+    vocab.insert(entrada);
+    idMax++;
+  }
+  else{
+    // cout << "Termo existe no vocabulário e tem id " << it->second << "\n";
+  }
 }
 
-int getTermID(string term){
+void vocabulary::print(){
+  for (unordered_map<string,int>::iterator it=vocab.begin(); it!=vocab.end(); it++){
+    cout << it->first << "  " << it->second << "\n";
+  }
+  cout << "voc size: " << vocab.size() << "\n";
+}
 
+int vocabulary::getTermID(string term){
+  unordered_map<string, int>::iterator it = vocab.find(term);
+  if (it != vocab.end()){
+    return it->second;
+  }
+  return -1;
 }

@@ -11,35 +11,41 @@ fileReader::fileReader(string path, int initNum, int numThreads){
   path_to_files = path;
 }
 
-string fileReader::getNextHtml(){
+vector<string> fileReader::getNextHtml(){
+  vector<string> page;
   stringstream ss;
   char c;
   unsigned char c2;
   file.get(c);
   c2 = (unsigned char) c;
-  while (c2 == '|'){
+  // cout << "entrou while1\n";
+  while ((c2 == '|') && (!file.eof())){
     file.get(c);
     c2 = (unsigned char) c;
   }
-  while (c2 != '|'){
-    cout << c2;
+  // cout << "entrou while2\n";
+  string url = "";
+  while ((c2 != '|') && (!file.eof())){
+    if (c2 != ' ')  url += c2;
     ss << c2;
     file.get(c);
     c2 = (unsigned char) c;
   }
-  cout << "\n";
+  page.push_back(url);
+  // cout << "\n";
   //string url = ss.str();
   ss << c2;
   ss.str("");
   file.get(c);
   c2 = (unsigned char) c;
 
-  while (c2 != '|'){
-    if ((int) c2 == 195){
-  		file.get(c);
-      c2 = (unsigned char) c;
-  		cout << (int) c2 << "\n";
-  	}
+  // cout << "entrou while3\n";
+  while ((c2 != '|') && (!file.eof())){
+    // if ((int) c2 == 195){
+  	// 	file.get(c);
+    //   c2 = (unsigned char) c;
+  	// 	cout << (int) c2 << "\n";
+  	// }
     ss << c2;
     file.get(c);
     c2 = (unsigned char) c;
@@ -48,8 +54,9 @@ string fileReader::getNextHtml(){
   //cout << html;
   //CharsetConverter csc("ISO8859-1","ascii");
   html = HTML::decode_entities(html);
+  page.push_back(html);
   // csc.convert(html);
-  return html;
+  return page;
 }
 
 bool fileReader::openNextFile(){

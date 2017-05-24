@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include "vocabulary.hpp"
 
 /*
 - tirar acentos
@@ -19,15 +20,17 @@ using namespace htmlcxx;
 class parser{
   public:
     parser();
-    void setHtml(string htmlToSet);
+    // void setHtml(string htmlToSet);
     vector<string> getTerms(string &text);
     bool isJS(string text);
     void retiraAcentos(string &text);
+    void cleanWord(string &term);
     void normalizeText(string &text);
-    void parse(string html);
+    unordered_map<int,int> parse(string htmlToParse);
+    void printVoc();
 
   private:
-    string html;
     int ndoc;
     unordered_map<int,char> charsetHTML;
+    static vocabulary voc;
 };
