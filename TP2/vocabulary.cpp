@@ -11,7 +11,5 @@ void vocabulary::addTerm(string term){
 }
 
 int getTermID(string term){
-  unordered_map<string,int>::iterator it = vocab.find(term);
-  if (it == vocab.end())  return -1;
-  return it->second;
+
 }
