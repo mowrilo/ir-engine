@@ -46,7 +46,6 @@ string fileReader::getNextHtml(){
   }
   string html = ss.str();
   //cout << html;
-  if (HTML::detect_utf8(html.c_str(), html.size())) cout << "ALO ALO MARCIANO \n";
   //CharsetConverter csc("ISO8859-1","ascii");
   html = HTML::decode_entities(html);
   // csc.convert(html);

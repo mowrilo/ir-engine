@@ -11,7 +11,7 @@ int main(){
   //shared_ptr(new fileReader);
   fileReader fr(PATH_HTMLS, 0, NTHREADS);
   parser ps;
-  for (int i=0; i<10; i++){
+  for (int i=0; i<1; i++){
     fr.openNextFile();
     string test = fr.getNextHtml();
     // cout << test;

@@ -22,8 +22,23 @@ void parser::setHtml(string htmlToSet){
   html = htmlToSet;
 }
 
-string parser::getNextTerm(){
-
+vector<string> parser::getTerms(string &text){
+  vector<string> rtrn(1);
+  // cout << text << "\n";
+  // cout << "initial size: " << text.size() << "\n";
+  while(text.size() > 0){
+    while (text[0] == ' ')  text.erase(text.begin());
+    string sub;
+    int pos=0;
+    while ((text[pos] != ' ') && (text[pos] != '\0'))  pos++;
+    sub = text.substr(0,pos);
+    // cout << pos << " " << sub << "\n";
+    // cout << "antes: " << text << "\n";
+    text.erase(0,pos);
+    // cout << "depois: " << text << "\n";
+    rtrn.push_back(sub);
+  }
+  return rtrn;
 }
 
 bool parser::isJS(string text){
@@ -53,6 +68,7 @@ void parser::normalizeText(string &text){ //tolower, tira plural, tira caractere
 
 void parser::parse(string html){
   HTML::ParserDom parser;
+  vector<string> termVec;
   tree<htmlcxx::HTML::Node> dom = parser.parseTree(html);
   tree<HTML::Node>::iterator it = dom.begin();
   tree<HTML::Node>::iterator end = dom.end();
@@ -68,8 +84,9 @@ void parser::parse(string html){
   	{
       string text = it->text();
       if (!isJS(text)){
-        if (text[0] != ' '){
-          if (text.length()) cout << "text: " << text << "\n";
+        termVec = getTerms(text);
+        for (int i=0; i<termVec.size(); i++){
+          cout << termVec[i] << "\n";
         }
       }
       //conserta essa m

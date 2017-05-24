@@ -2,6 +2,7 @@
 #include <bitset>
 #include <vector>
 #include <cmath>
+#include <fstream>
 using namespace std;
 
 void code(int num, bool* bitCode){
@@ -34,6 +35,9 @@ void decode(int* num, bool* bitCode){
 }
 
 int main(){
+  ifstream f1,f2;
+  f1.open("compressed");
+  f2.open("uncompressed");
   int num = 5;
   int n = log2(num);
   bool bitCode[2*n + 1];
@@ -41,6 +45,8 @@ int main(){
   for (int i=0; i<(2*n+1); i++) cout  << bitCode[i];
   int asd;
   decode(&asd, bitCode);
-  cout << "\n" << asd;
+  f1.close();
+  f2.close();
+  // cout << "\n" << asd;
   return 0;
 }
