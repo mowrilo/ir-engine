@@ -5,10 +5,12 @@ using namespace std;
 void eliasCoding::encode(int num, bool* bitCode){
   if (num == 0){
     bitCode[0] = 0;
+    bitCode[1] = 0;
     return;
   }
   else if (num == 1){
-    bitCode[0] = 1;
+    bitCode[0] = 0;
+    bitCode[1] = 1;
     return;
   }
   int n = floor(log2(num));
@@ -26,17 +28,24 @@ void eliasCoding::encode(int num, bool* bitCode){
   }
 }
 
-void eliasCoding::decode(int* num, bool* bitCode){
+void eliasCoding::decode(int* num, vector<bool> bitCode){
   int n = 0;
+  if (bitCode.size() == 2){
+    *num = (int) bitCode[1];
+    return;
+  }
   while (bitCode[n] != 0){
     n++;
   }
   int n2 = 0;
   int ci = n-1;
   for (int i=(n+1); i<=(2*n); i++){
-    n2 |= ((1 << ci) & bitCode[i]);
+    n2 |= ((1 << ci) & ((int) bitCode[i] << ci));
+    // int asd = (int) ((1 << ci) & ((int) bitCode[i] << ci));
+    // cout << "bitcode: " << ((int) bitCode[i]) << " 1 shiftado: " << (1 << ci) << " asd " << asd << "\n";
     ci--;
   }
+  cout << "ns: " << n << " " << n2 << "\n";
   *num = pow(2,n)+n2;
 }
 

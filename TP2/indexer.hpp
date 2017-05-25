@@ -1,48 +1,33 @@
 #include <iostream>
-#include <unordered_map>
-#include <htmlcxx/html/ParserDom.h>
+#include "fileReader.hpp"
+#include "parser.hpp"
+#include <fstream>
+#include "triple.hpp"
+#include <algorithm>
+#include "eliasCoding.hpp"
+#include <bitset>
+#include <cmath>
+#include <memory>
+#include <thread>
+#include <mutex>
+
+//#define PATH_HTMLS "/media/murilo/hdext/collection/"//"/home/murilo/Documentos/ri/TP2/"//
+#define FILERUN "runs/run"
+#define BYTESIZE 7
 
 using namespace std;
 using namespace htmlcxx;
 
-class index{
-  public:
-    void addTerm
-    void addDocument
-    string getTerm
-    string getDocument
-
-  private:
-    mutex voc
-    mutex doc
-    unordered_map<string, int> vocabulary;
-    unordered_map<string, int> documents;
-}
-
 class indexer{
   public:
-    void index(string path);
-    void start(strint path);
+    indexer();
+    static void index(string path_to_collection, int threadid);
+    static void encodeAndWrite(int a, int b, int c, int runNum);
+    void readAndDecode(int runNum);
+    void start(string path_to_collection);
 
   private:
-    string path_to_files;
-}
-
-
-class parser{
-  public:
-    string getTerm;
-
-  private:
-    string html;
-}
-
-class tuple{
-  public:
-    bool operator<(const tuple& a) const;
-
-  private:
-    int term;
-    int doc;
-    int freq;
-}
+    static ofstream docs;
+    static mutex docsFile;
+    static int docNum;
+};

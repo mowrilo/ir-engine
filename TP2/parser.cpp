@@ -1,7 +1,5 @@
 #include "parser.hpp"
 
-vocabulary parser::voc;
-
 using namespace std;
 using namespace htmlcxx;
 

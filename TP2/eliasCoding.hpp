@@ -7,5 +7,5 @@ using namespace std;
 
 namespace eliasCoding{
   void encode(int num, bool* bitCode);
-  void decode(int* num, bool* bitCode);
+  void decode(int* num, vector<bool> bitCode);
 }
