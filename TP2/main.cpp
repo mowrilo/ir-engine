@@ -10,6 +10,9 @@ using namespace std;
 
 int main(){
   indexer id;
+  // nWayMergeSort::sort(4);
   id.start(PATH_HTMLS);
   return 0;
 }
+
+//61 21 1291 2681

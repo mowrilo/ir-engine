@@ -1,6 +1,7 @@
 #include <iostream>
 #include <unordered_map>
 #include <utility>
+#include <fstream>
 
 using namespace std;
 
@@ -10,6 +11,7 @@ class vocabulary{
     void addTerm(string term);
     int getTermID(string term);
     void print();
+    int size();
 
   private:
     //mutex voc;

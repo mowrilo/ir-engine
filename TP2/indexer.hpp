@@ -2,16 +2,18 @@
 #include "fileReader.hpp"
 #include "parser.hpp"
 #include <fstream>
-#include "triple.hpp"
+// #include "triple.hpp"
 #include <algorithm>
-#include "eliasCoding.hpp"
+// #include "eliasCoding.hpp"
 #include <bitset>
 #include <cmath>
 #include <memory>
 #include <thread>
 #include <mutex>
+#include "nWayMergeSort.hpp"
 
 //#define PATH_HTMLS "/media/murilo/hdext/collection/"//"/home/murilo/Documentos/ri/TP2/"//
+#define FILERUN "runs/run"
 
 using namespace std;
 using namespace htmlcxx;

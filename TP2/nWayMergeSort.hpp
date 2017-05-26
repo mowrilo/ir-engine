@@ -1,13 +1,18 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <priority_queue>
+#include <queue>
 #include "triple.hpp"
+#include "eliasCoding.hpp"
+#include "run.hpp"
+#include <memory>
+#include <deque>
+#include <utility>
 
 #define FILERUN "runs/run"
 
 using namespace std;
 
 namespace nWayMergeSort{
-  void sort(string path);
+  void sort(int nFiles);
 };

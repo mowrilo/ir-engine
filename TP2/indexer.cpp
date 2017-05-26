@@ -1,6 +1,6 @@
 #include "indexer.hpp"
 
-#define NTHREADS 7
+#define NTHREADS 4
 
 using namespace std;
 
@@ -25,6 +25,7 @@ void indexer::start(string path_to_collection){
     cout << "joining thread " << i << "...\n";
   }
   docs.close();
+  voc.print();
 }
 
 
@@ -40,18 +41,15 @@ void indexer::index(string path_to_collection,int threadid){
     vector<string> test = fr.getNextHtml();
     string url = test[0];
     string htmlCode = test[1];
-    docsFile.lock();
-    docs << docNum << " " << url << "\n";
-    docNum++;
-    docsFile.unlock();
+    // docsFile.lock();
+    // docs << docNum << " " << url << "\n";
+    // docNum++;
+    // docsFile.unlock();
     int tamanho = htmlCode.size();
-    ps.normalizeText(htmlCode);
-    unordered_map<string,int> freqs = ps.parse(htmlCode);
-    vector<triple> run;
+    // ps.normalizeText(htmlCode);
+    unordered_map<string,int> freqs;// = ps.parse(htmlCode);
+    vector<triple> runVec;
     while (tamanho){
-      test = fr.getNextHtml();
-      url = test[0];
-      htmlCode = test[1];
       docsFile.lock();
       docs << docNum << " " << url << "\n";
       docNum++;
@@ -64,20 +62,28 @@ void indexer::index(string path_to_collection,int threadid){
         voc.addTerm(it->first);
         termID = voc.getTermID(it->first);
         vocMutex.unlock();
-        triple aux(termID, docNum, it->second);
-        run.push_back(aux);
+        triple aux(termID, docNum, it->second, 0);
+        runVec.push_back(aux);
       }
+      test = fr.getNextHtml();
+      url = test[0];
+      htmlCode = test[1];
       tamanho = htmlCode.size();
     }
+    vocMutex.lock();
+    cout << "vocabulary size so far: " << voc.size() << "\n";
+    vocMutex.unlock();
     cout << "beginning sorting...\n";
-    sort(run.begin(),run.end());
+    sort(runVec.begin(),runVec.end());
     cout << "ended sorting!\n";
-    cout << "ntriples: " << run.size() << "\n";
+    cout << "first element: " << runVec[0].nterm << " " << runVec[0].ndoc << " " << runVec[0].freq << "\n";
+    cout << "number of triples on run: " << runVec.size() << "\n";
 
     int diffTerm=0, diffDoc=0;
     int prevTerm=0, prevDoc=0;
     cout << "coding and writing...\n";
-    for (vector<triple>::iterator it=run.begin(); it != run.end(); ++it){
+    // run runToWrite();
+    for (vector<triple>::iterator it=runVec.begin(); it != runVec.end(); ++it){
       diffTerm = it->nterm - prevTerm;
       if (diffTerm == 0){
         diffDoc = it->ndoc - prevDoc;
@@ -86,7 +92,10 @@ void indexer::index(string path_to_collection,int threadid){
         diffDoc = it->ndoc;
       }
       // cout << it->nterm << " " << it->ndoc << " " << it->freq << "\n";
-      eliasCoding::encodeAndWrite(diffTerm,diffDoc,it->freq,runNum);
+      stringstream ss;
+      ss << runNum;
+      string fileName = FILERUN + ss.str();
+      eliasCoding::encodeAndWrite(it->nterm,diffDoc,it->freq,fileName,true);
       prevTerm = it->nterm;
       prevDoc = it->ndoc;
     }
