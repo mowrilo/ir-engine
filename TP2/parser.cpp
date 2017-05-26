@@ -84,13 +84,13 @@ void parser::normalizeText(string &text){ //tolower, tira plural, tira caractere
   }
 }
 
-unordered_map<int,int> parser::parse(string htmlToParse){
+unordered_map<string,int> parser::parse(string htmlToParse){
   HTML::ParserDom parser;
   vector<string> termVec;
   tree<htmlcxx::HTML::Node> dom = parser.parseTree(htmlToParse);
   tree<HTML::Node>::iterator it = dom.begin();
   tree<HTML::Node>::iterator end = dom.end();
-  unordered_map<int,int> termFreqs;
+  unordered_map<string,int> termFreqs;
   for (; it != end; ++it)
   {
   		it->parseAttributes();
@@ -105,14 +105,14 @@ unordered_map<int,int> parser::parse(string htmlToParse){
       if (!isJS(text)){
         termVec = getTerms(text);
         for (int i=0; i<termVec.size(); i++){
-          voc.addTerm(termVec[i]);
-          int termId = voc.getTermID(termVec[i]);
-          unordered_map<int,int>::iterator it = termFreqs.find(termId);
+          //voc.addTerm(termVec[i]);
+          //int termId = voc.getTermID(termVec[i]);
+          unordered_map<string,int>::iterator it = termFreqs.find(termVec[i]);
           if (it != termFreqs.end()){
             it->second++;
           }
           else{
-            pair<int,int> foo(termId,1);
+            pair<string,int> foo(termVec[i],1);
             termFreqs.insert(foo);
           }
         }
@@ -121,7 +121,7 @@ unordered_map<int,int> parser::parse(string htmlToParse){
   }
   return termFreqs;
 }
-
-void parser::printVoc(){
-  voc.print();
-}
+//
+// void parser::printVoc(){
+//   voc.print();
+// }

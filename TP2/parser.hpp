@@ -26,11 +26,11 @@ class parser{
     void retiraAcentos(string &text);
     void cleanWord(string &term);
     void normalizeText(string &text);
-    unordered_map<int,int> parse(string htmlToParse);
+    unordered_map<string,int> parse(string htmlToParse);
     void printVoc();
 
   private:
     int ndoc;
     unordered_map<int,char> charsetHTML;
-    static vocabulary voc;
+    //static vocabulary voc;
 };
