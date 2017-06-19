@@ -4,11 +4,10 @@ using namespace std;
 using namespace htmlcxx;
 
 parser::parser(){
-  // ntriples=0;
   ifstream chars;
   chars.open("charset");
   string aux;
-  while (getline(chars,aux)){
+  while (getline(chars,aux)){ //faz uma tabela hash com o charset de html, para retirar acentos e outros caracteres
     char c = aux[0];
     aux.erase(aux.begin());
     aux.erase(aux.begin());
@@ -18,47 +17,43 @@ parser::parser(){
   }
   chars.close();
 }
-//
-// void parser::setHtml(string htmlToSet){
-//   html = htmlToSet;
-// }
 
 void parser::cleanWord(string &term){
   int last=term.size()-1;
-  if ((term[0] == '\'') || (term[0] == '\"'))  term.erase(term.begin());
+  if ((term[0] == '\'') || (term[0] == '\"'))  term.erase(term.begin()); //retira aspas
   if ((term[last] == '\'') || (term[last] == '\"'))  term.pop_back();
   int pos=0;
   while ((pos < term.size()) && ((term[pos] >= 'a' && term[pos] <= 'z') || (term[pos] >= '0' && term[pos] <= '9'))){
-    pos++;
+    pos++; //mantém caracteres alfanuméricos
   }
   term = term.substr(0,pos);
-  if ((term.size() > 4) && (term.back() == 's'))  term.pop_back();
+  if ((term.size() > 4) && (term.back() == 's'))  term.pop_back(); //tira 's' do fim de palavras com mais de 4 letras
 }
 
-vector<string> parser::getTerms(string &text){
+vector<string> parser::getTerms(string &text){ //separa as palavras de um segmento de texto
   vector<string> rtrn;
-  // cout << text << "\n";
-  // cout << "initial size: " << text.size() << "\n";
   while(text.size() > 0){
     while (text[0] == ' ')  text.erase(text.begin());
     string sub;
     int pos=0;
-    while ((text[pos] != ' ') && (text[pos] != '\0'))  pos++;
+    // for (int i=0; i<text.size(); i++) cout << "letra " << i << ":" << text[i] << "!\n";
+    while ((text[pos] != ' ') && (pos < text.size())){
+      //cout << "aqui!!!\n";
+      pos++;
+    }
     sub = text.substr(0,pos);
-    // cout << pos << " " << sub << "\n";
-    // cout << "antes: " << text << "\n";
     text.erase(0,pos);
     cleanWord(sub);
+    // cout << "text: \n" << text << "\nsub:\n" << sub << "\npos:\n" << pos << "\ntextpos:\n" << text[pos] << "\n";
+    // cout << "text size:\n" << text.size() << "\ntext space:\n" << (text[0] == ' ') << "\n";
     if ((sub.size() > 1) && (sub.size() < 51)){
       rtrn.push_back(sub);
-      // cout << "pushed " << sub << "\n";
     }
   }
-  // cout << "size antes: " << rtrn.size() << "\n";
   return rtrn;
 }
 
-bool parser::isJS(string text){
+bool parser::isJS(string text){ //checa se o texto é script
   int find = text.find('{');
   if (find != string::npos) return true;
   find = text.find(" var ");
@@ -66,7 +61,7 @@ bool parser::isJS(string text){
   return false;
 }
 
-void parser::retiraAcentos(string &text){
+void parser::retiraAcentos(string &text){ //baseia-se no charset inicializado
   for (int i=0; i<text.size(); i++){
     unsigned char c = text[i];
     unordered_map<int,char>::iterator it = charsetHTML.find((int) c);
@@ -84,29 +79,33 @@ void parser::normalizeText(string &text){ //tolower, tira plural, tira caractere
   }
 }
 
-unordered_map<string,int> parser::parse(string htmlToParse){
-  HTML::ParserDom parser;
+info parser::parse(string htmlToParse){//pair<, vector<string> >
+  HTML::ParserDom parserInst; //instância do analizador de html
   vector<string> termVec;
-  tree<htmlcxx::HTML::Node> dom = parser.parseTree(htmlToParse);
+  tree<htmlcxx::HTML::Node> dom = parserInst.parseTree(htmlToParse); //cria a árvore de parsing
+  // cout << "criou arvore\n";
   tree<HTML::Node>::iterator it = dom.begin();
   tree<HTML::Node>::iterator end = dom.end();
   unordered_map<string,int> termFreqs;
-  for (; it != end; ++it)
-  {
-  		it->parseAttributes();
+  unordered_map<string,vector<string> > linkTerms;
+  for (; it != end; ++it){
+  		it->parseAttributes(); //faz o parsing na árvore
   }
+  // cout << "fez parsing na arvore\n";
   it = dom.begin();
   end = dom.end();
-  for (; it != end; ++it)
-  {
-  	if ((!it->isTag()) && (!it->isComment()))//(it->isTag()) &&
-  	{
+  for (; it != end; ++it){
+    // cout << "entrou for1\n";
+    // cout << "texto: \n" << *it << "\n";
+  	if ((!it->isTag()) && (!it->isComment())) //caso o texto não seja uma tag ou um comentário,
+  	{                                        //normaliza e obtém seus termos e frequências
+      // cout << "notag and no comment\n";
       string text = it->text();
       if (!isJS(text)){
+        // cout << "noJS";
         termVec = getTerms(text);
         for (int i=0; i<termVec.size(); i++){
-          //voc.addTerm(termVec[i]);
-          //int termId = voc.getTermID(termVec[i]);
+          // cout << "entrou for2\n";
           unordered_map<string,int>::iterator it = termFreqs.find(termVec[i]);
           if (it != termFreqs.end()){
             it->second++;
@@ -116,12 +115,39 @@ unordered_map<string,int> parser::parse(string htmlToParse){
             termFreqs.insert(foo);
           }
         }
+        // cout << "saiu for2\n";
       }
   	}
+    if (it->isTag()){
+      string aroldo = it->tagName();
+      if (aroldo.compare("a") == 0){
+        HTML::Node nod = *it;
+        nod.parseAttributes();
+        // cout << "text: " << it->text() << "\nclosing text:";
+        map<string,string> att = nod.attributes();
+        // cout << nod.attributes() << "\n";
+        for (map<string,string>::iterator iit = att.begin(); iit != att.end(); ++iit){
+          vector<string> termos;
+          //pair<string,vector<string> > links;
+          string url;
+          if (iit->first.compare("title") == 0){
+            string texto = iit->second;
+            termos = getTerms(texto);
+          } //cout << "attribute: " << iit->first << "  " << iit->second << "\n";
+          else if (iit->first.compare("href") == 0){
+            url = iit->second;
+          }
+          pair<string,vector<string> > links(url,termos);
+          linkTerms.insert(links);
+        }
+      }
+    }
   }
-  return termFreqs;
+  info retorno;
+  retorno.termFreq = termFreqs;
+  retorno.linkTerm = linkTerms;
+  // cout << "saiu for1\n";
+  return retorno;
 }
-//
-// void parser::printVoc(){
-//   voc.print();
-// }
+
+//vector<string> parseLinks

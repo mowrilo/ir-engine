@@ -1,7 +1,5 @@
 #include "indexer.hpp"
 
-#define NTHREADS 4
-
 using namespace std;
 
 ofstream indexer::docs;
@@ -9,102 +7,136 @@ int indexer::docNum;
 mutex indexer::docsFile;
 vocabulary indexer::voc;
 mutex indexer::vocMutex;
+mutex indexer::numberFile;
+int indexer::fileToIndex;
+documentList indexer::dlist;
 
 indexer::indexer(){
+  fileToIndex = 0;
 }
 
 void indexer::start(string path_to_collection){
-  docs.open("docs", ios::out);
+  // docs.open("docs", ios::out);
   docNum=1;
   vector<thread> thrds;
-  for (int i=0; i<NTHREADS; i++){ //Inicia as threads sem semente
-    thrds.push_back(thread(index, path_to_collection, i));
+  int greater = 0;
+  int nFiles[NTHREADS];
+  for (int i=0; i<NTHREADS; i++){ //Inicia as threads
+    thrds.push_back(thread(index, path_to_collection, i, &nFiles[i]));
   }
   for (int i=0; i<NTHREADS; i++){
     thrds[i].join();
     cout << "joining thread " << i << "...\n";
   }
-  docs.close();
+  for (int i=0; i<NTHREADS; i++){
+    if (nFiles[i] > greater)  greater = nFiles[i]; //obtém o índice do maior arquivo
+  }
+
+  // docs.close();
   voc.print();
+  dlist.writeAll();
+  sortBlock sb(10); //ordena com 10 caminhos.
+  sb.sortAll(greater);
 }
 
+bool compara(triple a, triple b){
+  return !(a < b); //comparação para a ordenação
+}
 
-void indexer::index(string path_to_collection,int threadid){
-  // encodeAndWrite(0,114,1,4);
-  // encodeAndWrite(0,14,1,4);
-  // readAndDecode(4);
-  // readAndDecode(4);
-  fileReader fr(path_to_collection, threadid, NTHREADS);
+void indexer::index(string path_to_collection,int threadid, int *numberOfFiles){
+  *numberOfFiles = threadid;
+  fileReader fr(path_to_collection, threadid, NTHREADS); //inicializa o leitor de arquivos
   parser ps;
   int runNum = threadid;
-  while(fr.openNextFile()){
-    vector<string> test = fr.getNextHtml();
+  int nFile;
+  numberFile.lock();
+  nFile = fileToIndex;
+  fileToIndex++;
+  numberFile.unlock();
+  while(fr.openNextFile(nFile)){ //abre um arquivo
+    *numberOfFiles = nFile;
+    cout << "Opened " << nFile << "\n";
+    vector<string> test = fr.getNextHtml(); //obtém o próximo html
     string url = test[0];
     string htmlCode = test[1];
-    // docsFile.lock();
-    // docs << docNum << " " << url << "\n";
-    // docNum++;
-    // docsFile.unlock();
     int tamanho = htmlCode.size();
-    // ps.normalizeText(htmlCode);
-    unordered_map<string,int> freqs;// = ps.parse(htmlCode);
+    unordered_map<string,int> freqs;
+    unordered_map<string,vector<string> > links;
     vector<triple> runVec;
-    while (tamanho){
-      docsFile.lock();
-      docs << docNum << " " << url << "\n";
-      docNum++;
-      docsFile.unlock();
-      ps.normalizeText(htmlCode);
-      if (url.size() > 0) freqs = ps.parse(htmlCode);
-      for (unordered_map<string,int>::iterator it=freqs.begin(); it != freqs.end(); it++){
-        int termID;
-        vocMutex.lock();
-        voc.addTerm(it->first);
-        termID = voc.getTermID(it->first);
-        vocMutex.unlock();
-        triple aux(termID, docNum, it->second, 0);
-        runVec.push_back(aux);
+    while (tamanho > 3){ //enquanto houver um código válido
+      // cout << "lendo url: " << url << "\n";
+      // if (url.compare("http://noticias.impa.br/auth?doc=2554") == 0)
+      // cout << "html: " << htmlCode << "\n";
+      if (htmlCode.find("%PDF") == string::npos){
+        int numberOfDoc;
+        // cout << "normalizing: " << url << "\n";
+        ps.normalizeText(htmlCode);
+        // cout << "parsing: " << url << "\n";
+        info infoRet;
+        if (url.size() > 0){
+          infoRet = ps.parse(htmlCode); //parsing no código
+          freqs = infoRet.termFreq;
+          links = infoRet.linkTerm;
+        }
+        docsFile.lock();
+        numberOfDoc = docNum;
+        docNum++;
+        dlist.addLength(numberOfDoc, freqs.size());
+        dlist.addUrl(numberOfDoc, url);
+        for (unordered_map<string,vector<string>>::iterator it=links.begin(); it != links.end(); it++){
+          dlist.addEdge(numberOfDoc, it->first);
+          for (int i=0; i<it->second.size(); i++){
+            dlist.addAnchor(it->first, it->second[i]);
+          }
+        }
+        docsFile.unlock();
+        // cout << "parsed!: " << url << "\n";
+        for (unordered_map<string,int>::iterator it=freqs.begin(); it != freqs.end(); it++){
+          int termID;
+          vocMutex.lock();
+          voc.addTerm(it->first); //obtém número dos termos e frequências,
+          termID = voc.getTermID(it->first); //criando triplas
+          vocMutex.unlock();
+          triple aux(termID, numberOfDoc, it->second, 0);
+          runVec.push_back(aux);
+        }
       }
+      // cout << "got terms: " << url << "\n";
       test = fr.getNextHtml();
       url = test[0];
       htmlCode = test[1];
       tamanho = htmlCode.size();
     }
+    // cout << "saiu!\n";
     vocMutex.lock();
-    cout << "vocabulary size so far: " << voc.size() << "\n";
+    cout << "Vocabulary size so far: " << voc.size() << "\n";
     vocMutex.unlock();
-    cout << "beginning sorting...\n";
-    sort(runVec.begin(),runVec.end());
-    cout << "ended sorting!\n";
-    cout << "first element: " << runVec[0].nterm << " " << runVec[0].ndoc << " " << runVec[0].freq << "\n";
-    cout << "number of triples on run: " << runVec.size() << "\n";
-
-    int diffTerm=0, diffDoc=0;
-    int prevTerm=0, prevDoc=0;
-    cout << "coding and writing...\n";
-    // run runToWrite();
+    cout << "Beginning sorting...\n";
+    sort(runVec.begin(),runVec.end(), compara); //ordena a run
+    cout << "Ended sorting!\n";
+    cout << "Number of triples on run: " << runVec.size() << "\n";
+    // int diffTerm=0, diffDoc=0;
+    // int prevTerm=0, prevDoc=0;
+    cout << "Coding and writing...\n";
     for (vector<triple>::iterator it=runVec.begin(); it != runVec.end(); ++it){
-      diffTerm = it->nterm - prevTerm;
-      if (diffTerm == 0){
-        diffDoc = it->ndoc - prevDoc;
-      }
-      else{
-        diffDoc = it->ndoc;
-      }
-      // cout << it->nterm << " " << it->ndoc << " " << it->freq << "\n";
+      // if (it->nterm == prevTerm){
+      //   diffDoc = it->ndoc - prevDoc;
+      // }
+      // else{
+      //   diffDoc = it->ndoc;
+      // }
       stringstream ss;
-      ss << runNum;
+      ss << nFile;
       string fileName = FILERUN + ss.str();
-      eliasCoding::encodeAndWrite(it->nterm,diffDoc,it->freq,fileName,true);
-      prevTerm = it->nterm;
-      prevDoc = it->ndoc;
+      eliasCoding::encodeAndWrite(it->nterm,it->ndoc,it->freq,fileName,true); //comprime e escreve em arquivo
+      // prevTerm = it->nterm;
+      // prevDoc = it->ndoc;
     }
-
-    // cout << "maxDiff: " << maxDiff << "\n";
-    // ps.printVoc();
     fr.closeFile();
-    runNum+=NTHREADS;
+    numberFile.lock();
+    nFile = fileToIndex;
+    fileToIndex++; //incrementa qual arquivo abrir em seguida
+    numberFile.unlock();
   }
-  // docs.close();
-  // return 0;
+  return;
 }

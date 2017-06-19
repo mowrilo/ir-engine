@@ -8,7 +8,7 @@ void eliasCoding::encode(int num, bool* bitCode){
     bitCode[1] = 0;
     return;
   }
-  else if (num == 1){
+  else if (num == 1){ //trata exclusivamente os números 0 e 1
     bitCode[0] = 0;
     bitCode[1] = 1;
     return;
@@ -16,13 +16,12 @@ void eliasCoding::encode(int num, bool* bitCode){
   int n = floor(log2(num));
   int n1 = n+1;
   int n2 = num - pow(2,n);
-  // cout << "n2: " << n2 << "\n";
-  for (int i=0; i<n; i++){
+  for (int i=0; i<n; i++){ //calcula a primeira parte em código unário
     bitCode[i] = 1;
   }
   bitCode[n] = 0;
   int ci = n-1;
-  for (int i=(n+1); i<=(2*n); i++){
+  for (int i=(n+1); i<=(2*n); i++){ //calcula a segunda parte em código binário
     bitCode[i] = ((n2 & (1 << ci)) != 0);
     ci--;
   }
@@ -34,98 +33,77 @@ void eliasCoding::decode(int* num, vector<bool> bitCode){
     *num = (int) bitCode[1];
     return;
   }
-  while (bitCode[n] != 0){
+  while (bitCode[n] != 0){ //reconhece o código unário
     n++;
   }
   int n2 = 0;
   int ci = n-1;
-  for (int i=(n+1); i<=(2*n); i++){
+  for (int i=(n+1); i<=(2*n); i++){ //lê o código binário
     n2 |= ((1 << ci) & ((int) bitCode[i] << ci));
-    // int asd = (int) ((1 << ci) & ((int) bitCode[i] << ci));
-    // cout << "bitcode: " << ((int) bitCode[i]) << " 1 shiftado: " << (1 << ci) << " asd " << asd << "\n";
     ci--;
   }
-  // cout << "ns: " << n << " " << n2 << "\n";
   *num = pow(2,n)+n2;
 }
 
 void eliasCoding::encodeAndWrite(int a, int b, int c, string fileName, bool writeTerm){
-  // cout << "aqui!" << a << " " << b << " " << c <<"\n";
   int sizA=2*floor(log2(a)) + 1, sizB=2*floor(log2(b)) + 1, sizC=2*floor(log2(c)) + 1;
   if ((a == 0) || (a == 1)) sizA = 2;
   if ((b == 0) || (b == 1)) sizB = 2;
   if ((c == 0) || (c == 1)) sizC = 2;
-  // if ()
-  // cout << sizA << " " << sizB << " " << sizC << " aeho\n\n\n";
   bool bA[sizA];
   bool bB[sizB];
   bool bC[sizC];
   int nbytes;
-  if (writeTerm){
+  // cout << "Escrevendo " << a << ", " << b << " e " << c << ". EscreveTermo: ";
+  // if (writeTerm)  cout << "SIM\n";
+  // else  cout << "NAO\n";
+
+  if (writeTerm){ //calcula o tamanho da escrita, em bytes
     nbytes = ceil((float) (sizA+sizB+sizC)/BYTESIZE);
   }
   else{
     nbytes = ceil((float) (sizB+sizC)/BYTESIZE);
   }
-  // cout << "nbytes: " << nbytes << "\n";
+  // cout << "Nbytes: " << nbytes << "\n";
   char bytes[nbytes];
-  memset(bytes,(char) 0,sizeof(char)*nbytes);
+  for (int i=0; i<nbytes; i++)  bytes[i] = (char) 0;
+  //memset(bytes,(char) 0,sizeof(char)*nbytes); //seta todos os bits para zero
+  if (writeTerm) bytes[0] |= (char) 1 << 7;
+  encode(a,bA); //caso vá escrever o termo, codifica A
+  // cout << "Coded A: \n";
+  // for (int i=0; i<sizA; i++)  cout << bA[i] << " ";
+  // cout << "\n";
   encode(b,bB);
-  encode(c,bC);
+  encode(c,bC); //codifica B e C
   int numBit = 0;
   if (writeTerm){
-    encode(a,bA);
-    bytes[0] |= 1 << 7;
     for (int i=0; i<sizA; i++){
-      bytes[numBit/BYTESIZE] |= (bA[i] << (numBit%BYTESIZE));
-      // cout << (int) bA[i];
+      // cout << "inserindo:\n" << (int) (bA[i] << (numBit%BYTESIZE)) << " no byte " << numBit/BYTESIZE << "\n";
+      bytes[numBit/BYTESIZE] |= (char) (bA[i] << (numBit%BYTESIZE)); //insere A, bit por bit
       numBit++;
     }
   }
-  // cout << "\nbB: ";
   for (int i=0; i<sizB; i++){
-    bytes[numBit/BYTESIZE] |= (bB[i] << (numBit%BYTESIZE));
-    // cout << (int) bB[i];
+    bytes[numBit/BYTESIZE] |= (bB[i] << (numBit%BYTESIZE));//insere B, bit por bit
     numBit++;
   }
-  // cout << "\nbC: ";
   for (int i=0; i<sizC; i++){
-    bytes[numBit/BYTESIZE] |= (bC[i] << (numBit%BYTESIZE));
-    // cout << (int) bC[i];// << "\n";
+    bytes[numBit/BYTESIZE] |= (bC[i] << (numBit%BYTESIZE));//insere C, bit por bit
     numBit++;
   }
-  // cout << "\n";
-  // cout << sizA << "  " << sizB <<  "  " << sizC << "  " << nbytes <<"\n";
   ofstream runFile;
-  // stringstream ss;
-  // ss << runNum;
-  // string fileName = FILERUN + ss.str();
-  runFile.open(fileName, ios::app | ios::binary);
-  // cout << "trying to save...\n";
-  //for (int i=0; i<nbytes; i++){
-    // unsigned char cc= bytes[i];
-  runFile.write(bytes,nbytes);
-    // cout << (int) bytes[i] << " ";
-  //}
-  runFile.close();
-  // cout << "final: \n";
+  // for (int i=0; i<nbytes; i++){
+  //   if ((i > 0) && ((int) bytes[i] < 0)){
+  //     cout << (int) bytes[i] << " ";
+  //   }
+  // }
   // cout << "\n";
+  runFile.open(fileName, ios::app | ios::binary); //escreve o resultado em arquivo binário
+  runFile.write(bytes,nbytes);
+  // for (int i=0; i<nbytes; i++){
+  //   char *c = new char;
+  //   *c = bytes[i];
+  //   delete[] c;
+  // }
+  runFile.close();
 }
-
-
-// int main(){
-//   ifstream f1,f2;
-//   f1.open("compressed");
-//   f2.open("uncompressed");
-//   int num = 5;
-//   int n = log2(num);
-//   bool bitCode[2*n + 1];
-//   code(num, bitCode);
-//   for (int i=0; i<(2*n+1); i++) cout  << bitCode[i];
-//   int asd;
-//   decode(&asd, bitCode);
-//   f1.close();
-//   f2.close();
-//   // cout << "\n" << asd;
-//   return 0;
-// }

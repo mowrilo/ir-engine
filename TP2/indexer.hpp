@@ -11,9 +11,10 @@
 #include <thread>
 #include <mutex>
 #include "nWayMergeSort.hpp"
+#include "docList.hpp"
 
-//#define PATH_HTMLS "/media/murilo/hdext/collection/"//"/home/murilo/Documentos/ri/TP2/"//
 #define FILERUN "runs/run"
+#define NTHREADS 4
 
 using namespace std;
 using namespace htmlcxx;
@@ -21,15 +22,16 @@ using namespace htmlcxx;
 class indexer{
   public:
     indexer();
-    static void index(string path_to_collection, int threadid);
-    //static void encodeAndWrite(int a, int b, int c, int runNum);
-    //void readAndDecode(int runNum);
-    void start(string path_to_collection);
+    static void index(string path_to_collection, int threadid, int* numberOfFiles); //método a ser executado em paralelo
+    void start(string path_to_collection); //começa a indexação
 
   private:
     static ofstream docs;
-    static vocabulary voc;
+    static vocabulary voc; //variáveis compartilhadas.
     static mutex docsFile;
     static mutex vocMutex;
+    static mutex numberFile;
+    static int fileToIndex;
     static int docNum;
+    static documentList dlist;
 };

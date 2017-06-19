@@ -1,74 +1,65 @@
 #include "run.hpp"
 
-run::run(int nRun){
-  stringstream ss;
-  ss << nRun;
-  string fileName = FILERUN + ss.str();
-  cout << "opens " << fileName << "\n";
+run::run(string name){
+  fileName = name;
   runFile.open(fileName,ios::in | ios::binary);
 }
 
+void run::deleteFile(void){ //remove o arquivo
+  remove(fileName.c_str());
+}
+
 vector<int> run::readAndDecode(){
-  // ifstream runFile;
   vector<int> ret;
-  // stringstream ss;
-  // ss << runNum;
-  // string fileName = FILERUN + ss.str();
-  // runFile.open(fileName, ios::binary);
   char *c = new char;
-  //shared_ptr<char> c(new char);
   vector<char> cVec;
-  runFile.read(c,1);
-  // cout << fileName << "\n";
-  // cout << "bytes lidos:\n" ;//<< (int) *c << "\n";
+  runFile.read(c,1); //o primeiro byte de uma entrada sempre terá o bit mais significativo igual a 1
   char c2 = *c;
-  cout << "pushing first: " <<  (int) c2 << "\n";
+  // if ((int) c2 >= 0)  cout << "PORRA VEI!!!\n\n\n";
   cVec.push_back(c2);
   runFile.read(c,1);
   c2=*c;
-  // cout << "depois: " << (int) *c << "\n";
-  // cout << ((*c & (1 << 7)) == 0) << "\n";
-  while (((c2 & (1 << 7)) == 0) && !runFile.eof()){
-    cout << (int) c2 << "\n";
+  while ((((int) c2) >= 0) && !runFile.eof()){ //lê bytes enquanto o bit mais significativo seja igual a zero.
+    // cout << "oi\n";
     cVec.push_back(c2);
-    // cout << (int) *c << "\n";
     runFile.read(c,1);
     c2=*c;
   }
-  if (!runFile.eof()) runFile.unget();
+  if ((((int) c2) < 0)) runFile.unget(); //devolve o último
   delete[] c;
-  // bool *bA, *bB, *bC;
   int nums[3], i=0;
-  //for (int ii=0; ii<cVec.size(); ii++)  cout<<(int) cVec[ii]<<"\n";
-  // while ()
   int by = 0;
   char c1 = cVec[0];
-  // if ((c1 & 1) == 0)
-  //i=0;
-  for (int k=0; k<3; k++){
+  bool keep = true;
+  while (keep){
     int pos=0;
     vector<bool> boolvec;
     int aux=i;
-    while ((c1 & (1 << i)) != 0){
-      boolvec.push_back(true);
-      i++;
-      if (i == 7){
-        by++;
-        c1 = cVec[by];
-        i = 0;
+    if(((c1 & (1 << aux)) == 0)){
+      pos=1;
+    }
+    else{
+      while ((c1 & (1 << i)) != 0){ //caminha bit pot bit, incrementando os bytes ao se chegar
+        boolvec.push_back(true);  // no penúltimo bit. este while lê a primeira parte do código elias gamma (unário)
+        i++;
+        if (i == 7){
+          by++;
+          c1 = cVec[by];
+          i = 0;
+        }
+        pos++;
       }
-      pos++;
     }
     boolvec.push_back(false);
-    if(((c1 & (1 << aux)) == 0)){
-      pos++;
-    }
     i++;
+    if (i == 7){
+      by++;
+      c1 = cVec[by];
+      i = 0;
+    }
     int n=pos;
-    // cout << "aqui! " << "pos: " << pos << " i: " << i << "\n";
-    for (int count=0; count<n; count++){
+    for (int count=0; count<n; count++){ //lê a quantidade restante de bits, dependendo do tamanho da primeira parte
       boolvec.push_back((c1 & (1 << i)) != 0);
-      // cout << "pushado: " << (int) ((c1 & (1 << i)) != 0) << "  " << count << "\n";
       i++;
       if (i == 7){
         by++;
@@ -77,25 +68,44 @@ vector<int> run::readAndDecode(){
       }
       pos++;
     }
-    // cout << "vector of size " << boolvec.size() << ":\n";
-    // for (vector<bool>::iterator it=boolvec.begin(); it != boolvec.end(); ++it){
-    //   cout << (int) *it;
+    // cout << "boolvec:\n";
+    // for (int asd=0; asd < boolvec.size(); asd++){
+    //   cout << boolvec[asd];
     // }
-    // cout  << "\n";
+    // cout << "\n";
     int auxx = 0;
-    eliasCoding::decode(&auxx,boolvec);
+    eliasCoding::decode(&auxx,boolvec); //decodifica o número
     ret.push_back(auxx);
-//    nums[k] = auxx;
-  //  cout << "\nnum: " << auxx << "\n";
+    keep = (by < (cVec.size() - 1));
+    // if ((int) cVec[0] == -86){
+    //   cout << "\n" << by << " keep: " << (int) keep << "\n";
+    // }
+    if (by == (cVec.size() - 1)){
+      for (int count=i; count < 7; count++){
+        if ((cVec[by] & (1 << count)) != 0)  keep = true;
+      }
+    }
+    if ((ret.size() != 1) && (ret.size()%2 == 1)){
+      if (i != 0){
+        by++;
+        c1 = cVec[by]; //caso leia a frequência, incrementa o byte, pois não há mais nada a ser lido neste
+        i=0;
+      }
+    }
   }
-  cout << "decoded: " << ret[0] <<" " << ret[1] << " " << ret[2] <<"\n";
-  // else{
-  //   cout << "error!\n"
-  // }
-  //cout << c << "\n";
-  // runFile.close();
+  if (ret.size() != 3){
+    cout << "OPAAAA size: " << ret.size() << "\n";
+    for (vector<char>::iterator it=cVec.begin(); it != cVec.end();++it){
+      cout << (int) *it << " ";
+    }
+    cout << "\n";
+    for (vector<int>::iterator it=ret.begin(); it != ret.end(); it++){
+      cout << *it << " ";
+    }
+    cout << "\n\n";
+  }
   return ret;
-}//to be continued...
+}
 
 bool run::isEOF(){
   return runFile.eof();
