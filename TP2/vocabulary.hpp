@@ -8,7 +8,7 @@ using namespace std;
 
 class vocabulary{
   public:
-    vocabulary(); //construtor
+    vocabulary(string name); //construtor
     void addTerm(string term); //adiciona um termo, caso não exista
     int getTermID(string term); //retorna o numero de identificação
     void print(); //escreve em um arquivo (não utilizada)
@@ -17,4 +17,5 @@ class vocabulary{
   private:
     map<string, int> vocab;
     int idMax;
+    string nameOfFile;
 };

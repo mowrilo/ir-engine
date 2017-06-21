@@ -6,9 +6,11 @@ queue<int, deque<int > > sortBlock::filesToMerge;
 int sortBlock::numberOfFile;
 mutex sortBlock::numFilesMut;
 mutex sortBlock::queueMutex;
+string sortBlock::path_to_runs;
 
-sortBlock::sortBlock(int nBl){ //inicializa
+sortBlock::sortBlock(int nBl,string pathToRuns){ //inicializa
   nBlocks = nBl;
+  path_to_runs = pathToRuns;
 }
 
 
@@ -65,7 +67,7 @@ void sortBlock::buildIndex(int value){
   cout << "Building inverted index from run #" << value << "...\n";
   stringstream ss;
   ss << value;
-  run last(FILERUN + ss.str());
+  run last(path_to_runs + ss.str());
   int lastTerm=0, lastDoc = 0, docToWrite;
   vector<vector<int> > docsToWrite;
   vector<int> tuple = last.readAndDecode();
@@ -78,7 +80,7 @@ void sortBlock::buildIndex(int value){
       tuple = last.readAndDecode();
     }
     lastTerm = tuple[0];
-    writeAll(docsToWrite, "indIndex");
+    writeAll(docsToWrite, (path_to_runs + "invIndex"));
     // if ((tuple[1] > 0) && (tuple[2] > 0)){ //lê as tuplas, e escreve no índice, podendo ou não adicionar o número do termo.
      //caso seja o mesmo termo, não adiciona.
     // lastTerm = tuple[0];
@@ -106,8 +108,8 @@ void sortBlock::sort(int topLevel, int* value){
       filesToMerge.pop();
       stringstream ss1;
       ss1 << which;
-      // shared_ptr<run> runAux(new run(FILERUN + ss1.str()));
-      run* runAux = new run(FILERUN + ss1.str());
+      // shared_ptr<run> runAux(new run(path_to_runs + ss1.str()));
+      run* runAux = new run(path_to_runs + ss1.str());
       whichRuns.push_back(which);
       runVec.push_back(runAux);
       numm++;
@@ -123,7 +125,7 @@ void sortBlock::sort(int topLevel, int* value){
     numFilesMut.unlock();
     ss << thisFile;
     cout << "Created " << thisFile << "\n";
-    string nameOfFile = FILERUN + ss.str();
+    string nameOfFile = path_to_runs + ss.str();
     int prevTerm=0, prevDoc=0;
 
     for (int i=0; i<whichRuns.size(); i++){ //cria as primeiras triplas e adiciona na fila

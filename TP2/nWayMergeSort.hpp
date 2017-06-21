@@ -15,14 +15,14 @@
 #include <algorithm>
 #include <memory>
 
-#define FILERUN "runs/run"
+// #define FILERUN "runs/run"
 #define NTHREADSMERGE 4
 
 using namespace std;
 
 class sortBlock{
 public:
-  sortBlock(int nBl);
+  sortBlock(int nBl, string pathToRuns);
   void sortAll(int nFiles); //inicia a ordenação
   static void sort(int topLevel, int* value); //ordena em um nível
   void buildIndex(int value); //dado um arquivo ordenado com as runs, constrói o índice
@@ -33,4 +33,5 @@ private:
   static queue<int, deque<int> > filesToMerge;
   static mutex numFilesMut;
   static mutex queueMutex;
+  static string path_to_runs;
 };

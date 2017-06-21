@@ -14,6 +14,7 @@
 #include "docList.hpp"
 
 #define FILERUN "runs/run"
+#define FILEANCHOR "runsAnchor/run"
 #define NTHREADS 4
 
 using namespace std;
@@ -28,10 +29,12 @@ class indexer{
   private:
     static ofstream docs;
     static vocabulary voc; //variáveis compartilhadas.
+    static vocabulary anchor;
     static mutex docsFile;
     static mutex vocMutex;
     static mutex numberFile;
+    static mutex anchorMutex;
     static int fileToIndex;
-    static int docNum;
+    // static int docNum;
     static documentList dlist;
 };

@@ -3,10 +3,12 @@
 using namespace std;
 
 ofstream indexer::docs;
-int indexer::docNum;
+// int indexer::docNum;
 mutex indexer::docsFile;
-vocabulary indexer::voc;
+vocabulary indexer::voc("vocabulary");
+vocabulary indexer::anchor("anchorTerms");
 mutex indexer::vocMutex;
+mutex indexer::anchorMutex;
 mutex indexer::numberFile;
 int indexer::fileToIndex;
 documentList indexer::dlist;
@@ -17,7 +19,7 @@ indexer::indexer(){
 
 void indexer::start(string path_to_collection){
   // docs.open("docs", ios::out);
-  docNum=1;
+  // docNum=1;
   vector<thread> thrds;
   int greater = 0;
   int nFiles[NTHREADS];
@@ -34,9 +36,12 @@ void indexer::start(string path_to_collection){
 
   // docs.close();
   voc.print();
-  dlist.writeAll();
-  sortBlock sb(10); //ordena com 10 caminhos.
-  sb.sortAll(greater);
+  anchor.print();
+  dlist.writeDomPR();
+  sortBlock sbRun(10, "runs/run"); //ordena com 10 caminhos.
+  sortBlock sbAnc(10, "anchorRuns/run");
+  sbRun.sortAll(greater);
+  sbAnc.sortAll(greater);
 }
 
 bool compara(triple a, triple b){
@@ -63,6 +68,7 @@ void indexer::index(string path_to_collection,int threadid, int *numberOfFiles){
     unordered_map<string,int> freqs;
     unordered_map<string,vector<string> > links;
     vector<triple> runVec;
+    vector<triple> runAnchor;
     while (tamanho > 3){ //enquanto houver um código válido
       // cout << "lendo url: " << url << "\n";
       // if (url.compare("http://noticias.impa.br/auth?doc=2554") == 0)
@@ -78,18 +84,48 @@ void indexer::index(string path_to_collection,int threadid, int *numberOfFiles){
           freqs = infoRet.termFreq;
           links = infoRet.linkTerm;
         }
+        vector<string> PRVec;
+        vector<int> docIDs;
         docsFile.lock();
-        numberOfDoc = docNum;
-        docNum++;
+        // numberOfDoc = docNum;
+        // docNum++;
+        dlist.addUrl(url);
+        numberOfDoc = dlist.getDocId(url);
         dlist.addLength(numberOfDoc, freqs.size());
-        dlist.addUrl(numberOfDoc, url);
-        for (unordered_map<string,vector<string>>::iterator it=links.begin(); it != links.end(); it++){
-          dlist.addEdge(numberOfDoc, it->first);
-          for (int i=0; i<it->second.size(); i++){
-            dlist.addAnchor(it->first, it->second[i]);
+        for (unordered_map<string,vector<string> >::iterator it=links.begin(); it != links.end(); it++){
+          string urlPR = it->first;
+          if ((urlPR.size() < 301) && (urlPR.size() > 10)){
+            string first4 = urlPR.substr(0,4);
+            if (first4.compare("http") == 0){
+              cout << "url: " << urlPR << "\n";
+              PRVec.push_back(urlPR);
+              dlist.addUrl(urlPR);
+              docIDs.push_back(dlist.getDocId(urlPR));
+            }
+          }
+          // for (int i=0; i<it->second.size(); i++){
+          //   dlist.addAnchor(it->first, it->second[i]);
+          // }
+        }
+        dlist.addEdge(url, PRVec, docIDs);
+        docsFile.unlock();
+        int count = 0;
+        cout << "nfile: " << nFile << " oioi1\n";
+        for (unordered_map<string,vector<string> >::iterator it=links.begin(); it != links.end(); it++){
+          vector<string> ancTerms = it->second;
+          int docID = docIDs[count];
+          count++;
+          for (vector<string>::iterator iit=ancTerms.begin(); iit != ancTerms.end(); iit++){
+            int termID;
+            anchorMutex.lock();
+            anchor.addTerm(*iit);
+            termID = anchor.getTermID(*iit);
+            anchorMutex.unlock();
+            triple aux(termID, docID, 1, 0);
+            runAnchor.push_back(aux);
           }
         }
-        docsFile.unlock();
+        cout << "nfile: " << nFile << " oioi2\n";
         // cout << "parsed!: " << url << "\n";
         for (unordered_map<string,int>::iterator it=freqs.begin(); it != freqs.end(); it++){
           int termID;
@@ -101,20 +137,23 @@ void indexer::index(string path_to_collection,int threadid, int *numberOfFiles){
           runVec.push_back(aux);
         }
       }
+      // cout << "saiu!\n";
       // cout << "got terms: " << url << "\n";
       test = fr.getNextHtml();
       url = test[0];
       htmlCode = test[1];
       tamanho = htmlCode.size();
     }
-    // cout << "saiu!\n";
+    cout << "saiu!\n";
     vocMutex.lock();
     cout << "Vocabulary size so far: " << voc.size() << "\n";
     vocMutex.unlock();
     cout << "Beginning sorting...\n";
     sort(runVec.begin(),runVec.end(), compara); //ordena a run
+    sort(runAnchor.begin(),runAnchor.end(), compara); //ordena a run de anchors
     cout << "Ended sorting!\n";
     cout << "Number of triples on run: " << runVec.size() << "\n";
+    cout << "Number of triples on anchor run: " << runAnchor.size() << "\n";
     // int diffTerm=0, diffDoc=0;
     // int prevTerm=0, prevDoc=0;
     cout << "Coding and writing...\n";
@@ -127,7 +166,21 @@ void indexer::index(string path_to_collection,int threadid, int *numberOfFiles){
       // }
       stringstream ss;
       ss << nFile;
-      string fileName = FILERUN + ss.str();
+      string fileName = "runs/run" + ss.str();
+      eliasCoding::encodeAndWrite(it->nterm,it->ndoc,it->freq,fileName,true); //comprime e escreve em arquivo
+      // prevTerm = it->nterm;
+      // prevDoc = it->ndoc;
+    }
+    for (vector<triple>::iterator it=runAnchor.begin(); it != runAnchor.end(); ++it){
+      // if (it->nterm == prevTerm){
+      //   diffDoc = it->ndoc - prevDoc;
+      // }
+      // else{
+      //   diffDoc = it->ndoc;
+      // }
+      stringstream ss;
+      ss << nFile;
+      string fileName = "anchorRuns/run" + ss.str();
       eliasCoding::encodeAndWrite(it->nterm,it->ndoc,it->freq,fileName,true); //comprime e escreve em arquivo
       // prevTerm = it->nterm;
       // prevDoc = it->ndoc;

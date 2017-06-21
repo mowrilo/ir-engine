@@ -2,8 +2,9 @@
 
 using namespace std;
 
-vocabulary::vocabulary(){
+vocabulary::vocabulary(string name){
   idMax = 1; //ID disponível para a próxima inserção
+  nameOfFile = name;
 }
 
 void vocabulary::addTerm(string term){
@@ -12,18 +13,18 @@ void vocabulary::addTerm(string term){
     pair<string, int> entrada(term,idMax);
     vocab.insert(entrada);
     ofstream file;
-    file.open("vocabulary", ios::app);
+    file.open(nameOfFile, ios::app);
     file << idMax << " " << term << "\n";
     file.close();
     idMax++;
   }
-  else{
-  }
+  // else{
+  // }
 }
 
 void vocabulary::print(){
   ofstream file;
-  file.open("vocabulary", ios::out); //escreve o vocabulario em arquivo
+  file.open(nameOfFile, ios::out); //escreve o vocabulario em arquivo
   file << vocab.size() << "\n";
   for (map<string,int>::iterator it=vocab.begin(); it!=vocab.end(); it++){
     file << it->first << "  " << it->second << "\n";
