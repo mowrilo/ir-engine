@@ -5,8 +5,8 @@ using namespace std;
 ofstream indexer::docs;
 // int indexer::docNum;
 mutex indexer::docsFile;
-vocabulary indexer::voc("vocabulary");
-vocabulary indexer::anchor("anchorTerms");
+vocabulary indexer::voc("vocabulary/");
+vocabulary indexer::anchor("anchorTerms/");
 mutex indexer::vocMutex;
 mutex indexer::anchorMutex;
 mutex indexer::numberFile;
@@ -35,8 +35,8 @@ void indexer::start(string path_to_collection){
   }
 
   // docs.close();
-  voc.print();
-  anchor.print();
+  // voc.print();
+  // anchor.print();
   dlist.writeDomPR();
   sortBlock sbRun(10, "runs/run"); //ordena com 10 caminhos.
   sortBlock sbAnc(10, "anchorRuns/run");
@@ -62,6 +62,7 @@ void indexer::index(string path_to_collection,int threadid, int *numberOfFiles){
     *numberOfFiles = nFile;
     cout << "Opened " << nFile << "\n";
     vector<string> test = fr.getNextHtml(); //obtém o próximo html
+    cout << "TESTEEEEE " << nFile << "\n";
     string url = test[0];
     string htmlCode = test[1];
     int tamanho = htmlCode.size();
@@ -70,71 +71,87 @@ void indexer::index(string path_to_collection,int threadid, int *numberOfFiles){
     vector<triple> runVec;
     vector<triple> runAnchor;
     while (tamanho > 3){ //enquanto houver um código válido
-      // cout << "lendo url: " << url << "\n";
-      // if (url.compare("http://noticias.impa.br/auth?doc=2554") == 0)
-      // cout << "html: " << htmlCode << "\n";
-      if (htmlCode.find("%PDF") == string::npos){
-        int numberOfDoc;
-        // cout << "normalizing: " << url << "\n";
-        ps.normalizeText(htmlCode);
-        // cout << "parsing: " << url << "\n";
-        info infoRet;
-        if (url.size() > 0){
-          infoRet = ps.parse(htmlCode); //parsing no código
-          freqs = infoRet.termFreq;
-          links = infoRet.linkTerm;
-        }
-        vector<string> PRVec;
-        vector<int> docIDs;
-        docsFile.lock();
-        // numberOfDoc = docNum;
-        // docNum++;
-        dlist.addUrl(url);
-        numberOfDoc = dlist.getDocId(url);
-        dlist.addLength(numberOfDoc, freqs.size());
-        for (unordered_map<string,vector<string> >::iterator it=links.begin(); it != links.end(); it++){
-          string urlPR = it->first;
-          if ((urlPR.size() < 301) && (urlPR.size() > 10)){
-            string first4 = urlPR.substr(0,4);
-            if (first4.compare("http") == 0){
-              cout << "url: " << urlPR << "\n";
-              PRVec.push_back(urlPR);
-              dlist.addUrl(urlPR);
-              docIDs.push_back(dlist.getDocId(urlPR));
-            }
+      if ((url.size() > 10) && (url.size() < 80)){
+        // cout << "lendo url: " << url << "\n";
+        // if (url.compare("http://noticias.impa.br/auth?doc=2554") == 0)
+        // cout << "html: " << htmlCode << "\n";
+        if (htmlCode.find("%PDF") == string::npos){
+          int numberOfDoc;
+          // cout << "normalizing: " << url << "\n";
+          ps.normalizeText(htmlCode);
+          // cout << "parsing: " << url << "\n";
+          info infoRet;
+          if (url.size() > 0){
+            infoRet = ps.parse(htmlCode); //parsing no código
+            freqs = infoRet.termFreq;
+            links = infoRet.linkTerm;
           }
-          // for (int i=0; i<it->second.size(); i++){
-          //   dlist.addAnchor(it->first, it->second[i]);
+          vector<string> PRVec;
+          vector<int> docIDs;
+          docsFile.lock();
+          // numberOfDoc = docNum;
+          // docNum++;
+          dlist.addUrl(url);
+          numberOfDoc = dlist.getDocId(url);
+          // cout << "adding doc " << numberOfDoc << " of length: " << freqs.size() << "\n";
+          dlist.addLength(numberOfDoc, freqs.size());
+          for (unordered_map<string,vector<string> >::iterator it=links.begin(); it != links.end(); it++){
+            string urlPR = it->first;
+            // if ((urlPR.size() < 301) && (urlPR.size() > 10)){
+            //   string first4 = urlPR.substr(0,4);
+            //   if (first4.compare("http") == 0){
+                // cout << "url: " << urlPR << "\n";
+                PRVec.push_back(urlPR);
+                dlist.addUrl(urlPR);
+                docIDs.push_back(dlist.getDocId(urlPR));
+            //   }
+            // }
+            // cout << "saiu do \n";
+            // for (int i=0; i<it->second.size(); i++){
+            //   dlist.addAnchor(it->first, it->second[i]);
+            // }
+          }
+          // cout << "addedge começa\n";
+          // cout << url << "  " << PRVec.size() << "  " << docIDs.size() << "\n";
+          if (docIDs.size() > 0)  dlist.addEdge(url, PRVec, docIDs);
+          // cout << "addedge termina\n";
+          docsFile.unlock();
+          //   cout << "AH MEU AMIGO\n";
+          //   if (links.size() == 0)  cout << "MELHOR...\n";
           // }
-        }
-        dlist.addEdge(url, PRVec, docIDs);
-        docsFile.unlock();
-        int count = 0;
-        cout << "nfile: " << nFile << " oioi1\n";
-        for (unordered_map<string,vector<string> >::iterator it=links.begin(); it != links.end(); it++){
-          vector<string> ancTerms = it->second;
-          int docID = docIDs[count];
-          count++;
-          for (vector<string>::iterator iit=ancTerms.begin(); iit != ancTerms.end(); iit++){
+          // if (links.size() > 0) {
+            int count = 0;
+            for (unordered_map<string,vector<string> >::iterator it=links.begin(); it != links.end(); it++){
+              // if (links.size() == 0) cout << "PUTA MERDA VEI\n";
+              vector<string> ancTerms = it->second;
+              // cout << "nfile: " << nFile << " links size: " << links.size() << " count: " << count << " size: " << docIDs.size() << "\n";
+              // for (unordered_map<string,vector<string> >::iterator itt=links.begin(); itt != links.end(); itt++)  cout << itt->first.size() <<"\n";
+              int docID = docIDs[count];
+              count++;
+              // cout << "nfile: " << nFile << " oioi1\n";
+              for (vector<string>::iterator iit=ancTerms.begin(); iit != ancTerms.end(); iit++){
+                if (ancTerms.size() == 0) cout << "ancSize: " << ancTerms.size() << "\n";
+                int termID;
+                anchorMutex.lock();
+                anchor.addTerm(*iit);
+                termID = anchor.getTermID(*iit);
+                anchorMutex.unlock();
+                triple aux(termID, docID, 1, 0);
+                runAnchor.push_back(aux);
+              }
+              // cout << "nfile: " << nFile << " oioi2\n";
+            }
+          // }
+          // cout << "parsed!: " << url << "\n";
+          for (unordered_map<string,int>::iterator it=freqs.begin(); it != freqs.end(); it++){
             int termID;
-            anchorMutex.lock();
-            anchor.addTerm(*iit);
-            termID = anchor.getTermID(*iit);
-            anchorMutex.unlock();
-            triple aux(termID, docID, 1, 0);
-            runAnchor.push_back(aux);
+            vocMutex.lock();
+            voc.addTerm(it->first); //obtém número dos termos e frequências,
+            termID = voc.getTermID(it->first); //criando triplas
+            vocMutex.unlock();
+            triple aux(termID, numberOfDoc, it->second, 0);
+            runVec.push_back(aux);
           }
-        }
-        cout << "nfile: " << nFile << " oioi2\n";
-        // cout << "parsed!: " << url << "\n";
-        for (unordered_map<string,int>::iterator it=freqs.begin(); it != freqs.end(); it++){
-          int termID;
-          vocMutex.lock();
-          voc.addTerm(it->first); //obtém número dos termos e frequências,
-          termID = voc.getTermID(it->first); //criando triplas
-          vocMutex.unlock();
-          triple aux(termID, numberOfDoc, it->second, 0);
-          runVec.push_back(aux);
         }
       }
       // cout << "saiu!\n";

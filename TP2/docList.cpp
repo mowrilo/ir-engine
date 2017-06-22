@@ -15,7 +15,11 @@ documentList::documentList(){
 
 string documentList::getUrlDomain(string url){
   int posFim=0, nbarras=0;
-  while (nbarras < 3){ //Vai até a posição da terceira barra, considerando que as duas primeiras estão em "http://"
+  // cout << "url: " << url << "\n";// domaintoadd: " << domain <<"\n";
+  // cout << "url[0]: " << url[posFim] <<"\n";
+  while ((nbarras < 3) && (url[posFim] != '\0')){ //Vai até a posição da terceira barra, considerando que as duas primeiras estão em "http://"
+  // while (nbarras < 3){
+    // cout << "oi\n";
     if (url[posFim] == '/')  nbarras++;
     posFim++;
   }
@@ -41,10 +45,15 @@ string documentList::getUrlDomain(string url){
 }
 
 void documentList::addLength(int doc, int leng){
-  ofstream len;
-  len.open("docs/len", ios::out | ios::app);
-  len << doc << " " << leng << "\n";
-  len.close();
+  // ofstream len;
+  // len.open("docs/len", ios::out | ios::app);
+  // len << doc << " " << leng << "\n";
+  // len.close();
+  map<int,int>::iterator it = lengths.find(doc);
+  if (it != lengths.end()){
+    pair<int,int> ins(doc,leng);
+    lengths.insert(ins);
+  }
   // unordered_map<int,int>::iterator it = lengths.find(doc);
   // pair<int,int> insere(doc,leng);
   // lengths.insert(insere);
@@ -53,31 +62,42 @@ void documentList::addLength(int doc, int leng){
 }
 
 void documentList::addUrl(string url){
+  // if (url.size() == 0)  cout << "GRITO\n";
+
   string domain = getUrlDomain(url);
-  // cout << "weights size: " << pageWeights.size() <<"\n";
   int keyPg = hashFunc(url, pageWeights);
   int keyDom = hashFunc(domain, domainWeights);
-  // cout << "oioi1.5\n";
   unordered_map<int,int>::iterator itPg = pages.find(keyPg);
   if (itPg == pages.end()){
     int num = docNum;
     docNum++;
     pair<int,int> adic(keyPg, num);
     pages.insert(adic);
+    int fileNumber = num/100000;
     ofstream arq;
-    arq.open("docs/urls", ios::out | ios::app);
+    stringstream ss;
+    ss << "docs/urls/" << fileNumber;
+    string fileName = ss.str();
+    arq.open(fileName, ios::out | ios::app);
     arq << num << " " << url << "\n";
     arq.close();
   }
 
+  // cout << "keydom: " << keyDom << "\n";
   unordered_map<int,int>::iterator itDom = domains.find(keyDom);
+  // cout << "exists: " << (itDom == domains.end()) << "\n";
   if (itDom == domains.end()){
     int num = domNum;
     domNum++;
+    // cout << num;
     pair<int,int> adic(keyDom, num);
     domains.insert(adic);
+    int fileNumber = num/100000;
     ofstream arq;
-    arq.open("docs/domains", ios::out | ios::app);
+    stringstream ss;
+    ss << "docs/domains/" << fileNumber;
+    string fileName = ss.str();
+    arq.open(fileName, ios::out | ios::app);
     arq << num << " " << domain << "\n";
     arq.close();
   }
@@ -96,8 +116,6 @@ int documentList::getDocId(string name){
 }
 
 void documentList::addEdge(string docUrl, vector<string> edges, vector<int> edNums){
-  ofstream arq;//, arqDom;
-  arq.open("docs/pagerankPg", ios::out | ios::app);
   // arqDom.open("docs/pagerankDom", ios::out | ios::app);
   string domain = getUrlDomain(docUrl);
   int keyPg = hashFunc(docUrl, pageWeights);
@@ -106,33 +124,78 @@ void documentList::addEdge(string docUrl, vector<string> edges, vector<int> edNu
   int pgNum = it->second;
   unordered_map<int,int>::iterator itDom = domains.find(keyDom);
   int domnNum = itDom->second;
-  unordered_map<int, unordered_set<int> >::iterator itPR = domainPageRank.find(domnNum);
-  if (itPR == domainPageRank.end()){
-    unordered_set<int> usAux;
-    pair<int,unordered_set<int> > aux(domnNum,usAux);
-    domainPageRank.insert(aux);
-  }
-  itPR = domainPageRank.find(domnNum);
-  // cout << "size of edges: " << edges.size() <<"\n";
+  int fileNumberPg = pgNum/100000;
+  int fileNumberDom = pgNum/100000;
+
+  // unordered_map<int, unordered_set<int> >::iterator itPR = domainPageRank.find(domnNum);
+  // if (itPR == domainPageRank.end()){
+  //   unordered_set<int> usAux;
+  //   pair<int,unordered_set<int> > aux(domnNum,usAux);
+  //   // cout << "adding domain number: " << domnNum << "\n";
+  //   domainPageRank.insert(aux);
+  // }
+  //
+  // // cout << "pgnum: " << pgNum << "\n";
+  // unordered_map<int, unordered_set<int> >::iterator itPRPG = pagePageRank.find(pgNum);
+  // if (itPRPG == pagePageRank.end()){
+  //   unordered_set<int> usAux;
+  //   pair<int,unordered_set<int> > aux(pgNum,usAux);
+  //   // cout << "adding domain number: " << domnNum << "\n";
+  //   pagePageRank.insert(aux);
+  // }
+  // cout << "aehoo2 searching for domain: " << domnNum << "\n";
+  // itPR = domainPageRank.find(domnNum);
+  // itPRPG = pagePageRank.find(pgNum);
+  // cout << "isPresent: " << (itPR == domainPageRank.end()) << " domain: " << domain <<  "\n";
+  vector<int> domNums;
   for (int i=0; i<edges.size(); i++){
+    // if (edges[i].compare("http://kiind.nl") == 0) cout << docUrl << "\n";// << edges[i] << "\n";
     string domEdg = getUrlDomain(edges[i]);
     int keyDomEdg = hashFunc(domEdg, domainWeights);
-    unordered_map<int,int>::iterator itDomEdg = domains.find(keyDomEdg);
-    // cout << "dominio: " << domEdg << "size: " << domEdg.size() << "\n";
-    int domnNumEdg = itDomEdg->second;
+    // int keyPageEdg = hashFunc(edges[i], pageWeights);
+    // unordered_map<int,int>::iterator itPgEdg = pages.find(keyPageEdg);
+    // int pgNumEdg = itPgEdg->second;
+    // cout << "size: " << itPRPG->second.size() << "pgnumedg: " << pgNumEdg << " aehoo1\n";
+    // unordered_set<int>::iterator rubens = itPRPG->second.find(pgNumEdg);
     // cout << "morreu =(\n";
-    unordered_set<int>::iterator itEdg = itPR->second.find(domnNumEdg);
-    if (itEdg == itPR->second.end()){
-      itPR->second.insert(domnNumEdg);
-    }
+    // if (rubens == itPRPG->second.end()){
+    //   itPRPG->second.insert(pgNumEdg);
+    // }
+    // cout << "dominio: " << domEdg << "size: " << domEdg.size() << "\n";
+    unordered_map<int,int>::iterator itDomEdg = domains.find(keyDomEdg);
+    int domnNumEdg = itDomEdg->second;
+    domNums.push_back(domnNumEdg);
+    // unordered_set<int>::iterator itEdg = itPR->second.find(domnNumEdg);
+    // if (itEdg == itPR->second.end()){
+    //   itPR->second.insert(domnNumEdg);
+    // }
   }
-
+  // cout << "pgrankdom size: " << domainPageRank.size() << "\n";
+  // cout << "pgrankpg size: " << pagePageRank.size() << "\n";
+  // cout << "aehoo3\n";
+  stringstream ss;
+  ss << "docs/PageRankPg/" << fileNumberPg;
+  string fileName = ss.str();
+  ofstream arq;//, arqDom;
+  arq.open(fileName, ios::out | ios::app);
   arq << pgNum;
   for (vector<int>::iterator itNum=edNums.begin(); itNum!=edNums.end();  ++itNum){
     arq << " " << *itNum;
   }
   arq << "\n";
   arq.close();
+
+  stringstream ss1;
+  ss1 << "docs/PageRankDom/" << fileNumberDom;
+  fileName = ss1.str();
+  ofstream arq1;//, arqDom;
+  arq1.open(fileName, ios::out | ios::app);
+  arq1 << domnNum;
+  for (vector<int>::iterator itNum=domNums.begin(); itNum!=domNums.end();  ++itNum){
+    arq1 << " " << *itNum;
+  }
+  arq1 << "\n";
+  arq1.close();
   // unordered_map<int,vector<string>>::iterator it = pageRankGraph.find(doc);
   // if (it == pageRankGraph.end()){
   //   vector<string> edges;

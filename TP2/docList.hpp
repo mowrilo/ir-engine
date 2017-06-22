@@ -4,6 +4,7 @@
 #include <map>
 #include <vector>
 #include <fstream>
+#include <sstream>
 
 // #define DOCSPATH "docs/"
 
@@ -32,9 +33,11 @@ private:
   // unordered_map<int,int> lengths;
   vector<int> pageWeights;
   vector<int> domainWeights;
-  unordered_map<int,int> pages;
+  unordered_map<int,int> pages; //chave -> id do documento
   unordered_map<int,int> domains;
   unordered_map<int, unordered_set<int> > domainPageRank;
+  unordered_map<int, unordered_set<int> > pagePageRank;
+  map<int, int> lengths;
   // unordered_map<int,vector<string> > pageRankGraph;
   // unordered_map<string,vector<string> > anchorTerms;
   int docNum;

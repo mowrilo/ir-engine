@@ -46,7 +46,7 @@ vector<string> parser::getTerms(string &text){ //separa as palavras de um segmen
     cleanWord(sub);
     // cout << "text: \n" << text << "\nsub:\n" << sub << "\npos:\n" << pos << "\ntextpos:\n" << text[pos] << "\n";
     // cout << "text size:\n" << text.size() << "\ntext space:\n" << (text[0] == ' ') << "\n";
-    if ((sub.size() > 1) && (sub.size() < 51)){
+    if ((sub.size() > 1) && (sub.size() < 50)){
       rtrn.push_back(sub);
     }
   }
@@ -123,22 +123,29 @@ info parser::parse(string htmlToParse){//pair<, vector<string> >
       if (aroldo.compare("a") == 0){
         HTML::Node nod = *it;
         nod.parseAttributes();
-        // cout << "text: " << it->text() << "\nclosing text:";
+        // cout << "text: " << it->text() << "\n";
         map<string,string> att = nod.attributes();
         // cout << nod.attributes() << "\n";
+        vector<string> termos;
+        string url = "";
         for (map<string,string>::iterator iit = att.begin(); iit != att.end(); ++iit){
-          vector<string> termos;
           //pair<string,vector<string> > links;
-          string url;
+          // cout << "attribute: " << iit->first << "  " << iit->second << "\n";
           if (iit->first.compare("title") == 0){
             string texto = iit->second;
             termos = getTerms(texto);
-          } //cout << "attribute: " << iit->first << "  " << iit->second << "\n";
+          }
           else if (iit->first.compare("href") == 0){
             url = iit->second;
           }
-          pair<string,vector<string> > links(url,termos);
-          linkTerms.insert(links);
+        }
+        if ((url.size() < 80) && (url.size() > 10)){
+          string first4 = url.substr(0,4);
+          if (first4.compare("http") == 0){
+            // if (url.size() == 0)  cout << "ALO ALO MARCIANO\n";
+            pair<string,vector<string> > links(url,termos);
+            linkTerms.insert(links);
+          }
         }
       }
     }

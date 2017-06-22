@@ -13,8 +13,9 @@ void vocabulary::addTerm(string term){
     pair<string, int> entrada(term,idMax);
     vocab.insert(entrada);
     ofstream file;
-    file.open(nameOfFile, ios::app);
-    file << idMax << " " << term << "\n";
+    string printFile = nameOfFile + term[0];
+    file.open(printFile, ios::out | ios::app);
+    file << term << " " << idMax << "\n";
     file.close();
     idMax++;
   }
@@ -23,14 +24,15 @@ void vocabulary::addTerm(string term){
 }
 
 void vocabulary::print(){
-  ofstream file;
-  file.open(nameOfFile, ios::out); //escreve o vocabulario em arquivo
-  file << vocab.size() << "\n";
   for (map<string,int>::iterator it=vocab.begin(); it!=vocab.end(); it++){
+    ofstream file;
+    string printFile = nameOfFile + it->first[0];
+    file.open(nameOfFile, ios::out); //escreve o vocabulario em arquivo
+    file << vocab.size() << "\n";
     file << it->first << "  " << it->second << "\n";
+    file.close();
   }
-  file.close();
-  cout << "voc size: " << vocab.size() << "\n";
+  cout << "Final vocabulary size: " << vocab.size() << "\n";
 }
 
 int vocabulary::size(){

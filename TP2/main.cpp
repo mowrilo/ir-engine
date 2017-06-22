@@ -53,7 +53,7 @@ int main(){
   //   }
   //   cout << "\n";
   // }
-  // sortBlock sb(10);
+  // sortBlock sb(10, "runs/run");
   // sb.buildIndex(1139);
   // sb.sortAll(917);
   return 0;
