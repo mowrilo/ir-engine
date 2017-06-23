@@ -15,6 +15,7 @@ sortBlock::sortBlock(int nBl,string pathToRuns){ //inicializa
 
 
 void sortBlock::sortAll(int nFiles){
+  cout << "Number of files to sort on folder " << path_to_runs << ": " << nFiles << ".\n";
   numberOfFile = nFiles;
   int topLevel = ceil(log2(nFiles)/log2(nBlocks));
   int value;
@@ -60,23 +61,27 @@ void writeAll(vector<vector<int> > docsToWrite, string file){
     int n2 = 2*floor(log2(v[2]))+1;
     nbytes += ceil(((float) n1+n2)/7);
   }
-  cout << "Term: " << termId << " on file " << fileName << "\n";
+  // cout << "Term: " << termId << " on file " << fileName << "\n";
   eliasCoding::encodeAndWrite(termId,nbytes,docsToWrite.size(),fileName,true);
   vector<int> previous(3);
   // for (vector<vector<int> >::iterator it=docsToWrite.begin(); it!=docsToWrite.end(); it++){
+  // cout << "Size of docs to write: " << docsToWrite.size() <<"\n";
   for (int i=0; i<docsToWrite.size(); i++){
+    // cout << "i: "  << i << "\n";
     vector<int> v = docsToWrite[i];
-    if (i < (docsToWrite.size() - 1)){
-      while(docsToWrite[i+1][1] == v[1]){
-        v[1] += docsToWrite[i+1][1];
-        cout << "iguais: " << v[1] << " " << docsToWrite[i+1][1] << "\n";
+    // cout << "asd: " << (i < (docsToWrite.size() - 1)) << "\n";
+    // if (i < (docsToWrite.size() - 1)){
+    while((i < (docsToWrite.size() - 1)) && (docsToWrite[i+1][1] == v[1])){
+        // cout << "iguais: " << v[1] << " " << docsToWrite[i+1][1] << "\n";
+        v[2] += docsToWrite[i+1][2];
         i++;
-      }
     }
+    // }
     // if (v[1] == previous[1]){
     //   previous[2] +=
     // }
     eliasCoding::encodeAndWrite(termId,v[1],v[2],fileName,false);
+    // for (int a=0; a<v.size();a++) cout << v[a] <<"\n";
   }
 }
 
@@ -91,16 +96,18 @@ void sortBlock::buildIndex(int value){
     vector<vector<int> > docsToWrite;
     vector<int> tuple = last.readAndDecode();
     docsToWrite.push_back(tuple);
+    // cout << "eof: " << last.isEOF() <<"\n";
     lastTerm = tuple[0];
-    tuple = last.readAndDecode();
+    // cout << "eof: " << last.isEOF() <<"\n";
+    if (!last.isEOF()) tuple = last.readAndDecode();
     while ((tuple[0] == lastTerm) && (!last.isEOF())){
       // cout << tuple[0] << " " << tuple[1] << " " << tuple[2] << "\n";
       docsToWrite.push_back(tuple);
       tuple = last.readAndDecode();
     }
-    // cout << "saiu!\n";
     lastTerm = tuple[0];
     writeAll(docsToWrite, (path_to_runs + "invIndex"));
+    // cout << "oi gente!\n";
     // if ((tuple[1] > 0) && (tuple[2] > 0)){ //lê as tuplas, e escreve no índice, podendo ou não adicionar o número do termo.
      //caso seja o mesmo termo, não adiciona.
     // lastTerm = tuple[0];
@@ -108,6 +115,7 @@ void sortBlock::buildIndex(int value){
     // }
   }
   cout << "Index built!\n";
+  last.deleteFile();
 }
 
 void sortBlock::sort(int topLevel, int* value){
@@ -144,14 +152,18 @@ void sortBlock::sort(int topLevel, int* value){
     numberOfFile++;
     numFilesMut.unlock();
     ss << thisFile;
-    cout << "Created " << thisFile << "\n";
     string nameOfFile = path_to_runs + ss.str();
+    cout << "Created " << nameOfFile << "\n";
     int prevTerm=0, prevDoc=0;
 
     for (int i=0; i<whichRuns.size(); i++){ //cria as primeiras triplas e adiciona na fila
       vector<int> eCod;
       if (!runVec[i]->isEOF()){
         eCod = runVec[i]->readAndDecode();
+        for (int asd = 0; asd<eCod.size(); asd++){
+          cout << eCod[asd] << " ";
+        }
+        cout << "\n";
         triple tr(eCod[0],eCod[1],eCod[2],i);
         pQueue.push(tr);
       }
@@ -166,7 +178,7 @@ void sortBlock::sort(int topLevel, int* value){
       //   docToWrite-=prevDoc;
       // }
       // if ((docToWrite > 0) && (extracted.freq > 0)){
-        eliasCoding::encodeAndWrite(extracted.nterm, extracted.ndoc, extracted.freq, nameOfFile, true);
+      eliasCoding::encodeAndWrite(extracted.nterm, extracted.ndoc, extracted.freq, nameOfFile, true);
         // prevTerm = extracted.nterm;
         // prevDoc = extracted.ndoc;
       // }

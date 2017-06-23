@@ -70,7 +70,6 @@ void eliasCoding::encodeAndWrite(int a, int b, int c, string fileName, bool writ
   //memset(bytes,(char) 0,sizeof(char)*nbytes); //seta todos os bits para zero
   if (writeTerm) bytes[0] |= (char) 1 << 7;
   encode(a,bA); //caso vá escrever o termo, codifica A
-  // cout << "Coded A: \n";
   // for (int i=0; i<sizA; i++)  cout << bA[i] << " ";
   // cout << "\n";
   encode(b,bB);
@@ -92,6 +91,7 @@ void eliasCoding::encodeAndWrite(int a, int b, int c, string fileName, bool writ
     numBit++;
   }
   ofstream runFile;
+  // cout << "Coded A: \n";
   // for (int i=0; i<nbytes; i++){
   //   if ((i > 0) && ((int) bytes[i] < 0)){
   //     cout << (int) bytes[i] << " ";

@@ -48,6 +48,7 @@ vector<string> fileReader::getNextHtml(){
 }
 
 bool fileReader::openNextFile(int nFile){
+  // cout << "entrou no open next!\n";
   string filename = "html_";
   fileNumber = nFile;
   filename.append(to_string(fileNumber));

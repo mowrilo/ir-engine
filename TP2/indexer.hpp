@@ -23,8 +23,9 @@ using namespace htmlcxx;
 class indexer{
   public:
     indexer();
-    static void index(string path_to_collection, int threadid, int* numberOfFiles); //método a ser executado em paralelo
+    static void index(string path_to_collection, int threadid, int* numberOfFiles, int *numberOfDocuments); //método a ser executado em paralelo
     void start(string path_to_collection); //começa a indexação
+    // bool isValid(string url);
 
   private:
     static ofstream docs;

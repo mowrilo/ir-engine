@@ -46,7 +46,7 @@ vector<string> parser::getTerms(string &text){ //separa as palavras de um segmen
     cleanWord(sub);
     // cout << "text: \n" << text << "\nsub:\n" << sub << "\npos:\n" << pos << "\ntextpos:\n" << text[pos] << "\n";
     // cout << "text size:\n" << text.size() << "\ntext space:\n" << (text[0] == ' ') << "\n";
-    if ((sub.size() > 1) && (sub.size() < 50)){
+    if ((sub.size() > 1) && (sub.size() < 30)){
       rtrn.push_back(sub);
     }
   }
@@ -139,7 +139,7 @@ info parser::parse(string htmlToParse){//pair<, vector<string> >
             url = iit->second;
           }
         }
-        if ((url.size() < 80) && (url.size() > 10)){
+        if ((url.size() < 60) && (url.size() > 10)){
           string first4 = url.substr(0,4);
           if (first4.compare("http") == 0){
             // if (url.size() == 0)  cout << "ALO ALO MARCIANO\n";

@@ -53,8 +53,8 @@ int main(){
   //   }
   //   cout << "\n";
   // }
-  // sortBlock sb(10, "runs/run");
-  // sb.buildIndex(1139);
-  // sb.sortAll(917);
+  // sortBlock sb(10, "anchorRuns/run");
+  // sb.buildIndex(4);
+  // sb.sortAll(4);
   return 0;
 }

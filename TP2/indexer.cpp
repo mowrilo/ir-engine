@@ -17,14 +17,25 @@ indexer::indexer(){
   fileToIndex = 0;
 }
 
+bool isValid(string url){
+  bool value = true;
+  if (url.find(".pdf") != string::npos) value = false;
+  if (url.find(".doc") != string::npos) value = false;
+  if (url.find(".ppt") != string::npos) value = false;
+  if (url.find(".mp3") != string::npos) value = false;
+  return value;
+}
+
 void indexer::start(string path_to_collection){
   // docs.open("docs", ios::out);
   // docNum=1;
   vector<thread> thrds;
   int greater = 0;
+  int nofd = 0;
   int nFiles[NTHREADS];
+  int nDocs[NTHREADS];
   for (int i=0; i<NTHREADS; i++){ //Inicia as threads
-    thrds.push_back(thread(index, path_to_collection, i, &nFiles[i]));
+    thrds.push_back(thread(index, path_to_collection, i, &nFiles[i], &nDocs[i]));
   }
   for (int i=0; i<NTHREADS; i++){
     thrds[i].join();
@@ -32,24 +43,41 @@ void indexer::start(string path_to_collection){
   }
   for (int i=0; i<NTHREADS; i++){
     if (nFiles[i] > greater)  greater = nFiles[i]; //obtém o índice do maior arquivo
+    if (nDocs[i] > nofd)  nofd = nDocs[i];
   }
-
+  ofstream arq;
+  arq.open("ndoc",ios::out);
+  arq << nofd;
+  arq.close();
   // docs.close();
   // voc.print();
   // anchor.print();
-  dlist.writeDomPR();
+  // dlist.writeDomPR();
+  dlist.calcPagePR();
+  // dlist.calcDomPR();
+  cout << "RUN\n";
   sortBlock sbRun(10, "runs/run"); //ordena com 10 caminhos.
+  cout << "RUN\n";
+  sbRun.sortAll(greater+1);
+  // vector<thread> sortThreads;
   sortBlock sbAnc(10, "anchorRuns/run");
-  sbRun.sortAll(greater);
-  sbAnc.sortAll(greater);
+  sbAnc.sortAll(greater+1);
+
+  // sortThreads.push_back(thread(sbRun.sortAll,greater));
+  // sortThreads.push_back(thread(sbAnc.sortAll,greater));
 }
 
 bool compara(triple a, triple b){
-  return !(a < b); //comparação para a ordenação
+  if (a.nterm == b.nterm){
+    //if (a.ndoc)
+    return (a.ndoc < b.ndoc);
+  }
+  return (a.nterm < b.nterm); //comparação para a ordenação
 }
 
-void indexer::index(string path_to_collection,int threadid, int *numberOfFiles){
+void indexer::index(string path_to_collection,int threadid, int *numberOfFiles, int *numberOfDocuments){
   *numberOfFiles = threadid;
+  *numberOfDocuments = 0;
   fileReader fr(path_to_collection, threadid, NTHREADS); //inicializa o leitor de arquivos
   parser ps;
   int runNum = threadid;
@@ -59,19 +87,21 @@ void indexer::index(string path_to_collection,int threadid, int *numberOfFiles){
   fileToIndex++;
   numberFile.unlock();
   while(fr.openNextFile(nFile)){ //abre um arquivo
+    // cout << "thread " << threadid << " begun!!\n";
     *numberOfFiles = nFile;
-    cout << "Opened " << nFile << "\n";
+    cout << "thread " << threadid << " Opened " << nFile << "\n";
     vector<string> test = fr.getNextHtml(); //obtém o próximo html
-    cout << "TESTEEEEE " << nFile << "\n";
+    // cout << "thread " << threadid << " TESTEEEEE " << nFile << "\n";
     string url = test[0];
     string htmlCode = test[1];
     int tamanho = htmlCode.size();
-    unordered_map<string,int> freqs;
-    unordered_map<string,vector<string> > links;
     vector<triple> runVec;
     vector<triple> runAnchor;
     while (tamanho > 3){ //enquanto houver um código válido
-      if ((url.size() > 10) && (url.size() < 80)){
+      if ((url.size() > 10 && url.size() < 60) && isValid(url)){
+        // break;
+        unordered_map<string,int> freqs;
+        unordered_map<string,vector<string> > links;
         // cout << "lendo url: " << url << "\n";
         // if (url.compare("http://noticias.impa.br/auth?doc=2554") == 0)
         // cout << "html: " << htmlCode << "\n";
@@ -93,8 +123,9 @@ void indexer::index(string path_to_collection,int threadid, int *numberOfFiles){
           // docNum++;
           dlist.addUrl(url);
           numberOfDoc = dlist.getDocId(url);
+          if (numberOfDoc > *numberOfDocuments)  *numberOfDocuments = numberOfDoc;
           // cout << "adding doc " << numberOfDoc << " of length: " << freqs.size() << "\n";
-          dlist.addLength(numberOfDoc, freqs.size());
+          // dlist.addLength(numberOfDoc, freqs.size());
           for (unordered_map<string,vector<string> >::iterator it=links.begin(); it != links.end(); it++){
             string urlPR = it->first;
             // if ((urlPR.size() < 301) && (urlPR.size() > 10)){
@@ -137,18 +168,27 @@ void indexer::index(string path_to_collection,int threadid, int *numberOfFiles){
                 termID = anchor.getTermID(*iit);
                 anchorMutex.unlock();
                 triple aux(termID, docID, 1, 0);
+                // triple aux2(1, 1, 1, 0);
                 runAnchor.push_back(aux);
               }
               // cout << "nfile: " << nFile << " oioi2\n";
             }
           // }
           // cout << "parsed!: " << url << "\n";
+          // ofstream termsDocs;
+          // stringstream ss;
+          // ss << numberOfDoc;
+          string docsFileName = "docs/docsTerms/docsterms";
+          int numOfFile = numberOfDoc/10000;
+          docsFileName.append(to_string(numOfFile));
+          eliasCoding::encodeAndWrite(numberOfDoc, freqs.size(), 1, docsFileName, true);
           for (unordered_map<string,int>::iterator it=freqs.begin(); it != freqs.end(); it++){
             int termID;
             vocMutex.lock();
             voc.addTerm(it->first); //obtém número dos termos e frequências,
             termID = voc.getTermID(it->first); //criando triplas
             vocMutex.unlock();
+            eliasCoding::encodeAndWrite(numberOfDoc, termID, it->second, docsFileName, false);
             triple aux(termID, numberOfDoc, it->second, 0);
             runVec.push_back(aux);
           }
@@ -161,19 +201,19 @@ void indexer::index(string path_to_collection,int threadid, int *numberOfFiles){
       htmlCode = test[1];
       tamanho = htmlCode.size();
     }
-    cout << "saiu!\n";
+    cout << "thread " << threadid << " saiu!\n";
     vocMutex.lock();
     cout << "Vocabulary size so far: " << voc.size() << "\n";
     vocMutex.unlock();
-    cout << "Beginning sorting...\n";
+    cout << "thread " << threadid << " Beginning sorting...\n";
     sort(runVec.begin(),runVec.end(), compara); //ordena a run
     sort(runAnchor.begin(),runAnchor.end(), compara); //ordena a run de anchors
-    cout << "Ended sorting!\n";
+    cout << "thread " << threadid << " Ended sorting!\n";
     cout << "Number of triples on run: " << runVec.size() << "\n";
     cout << "Number of triples on anchor run: " << runAnchor.size() << "\n";
     // int diffTerm=0, diffDoc=0;
     // int prevTerm=0, prevDoc=0;
-    cout << "Coding and writing...\n";
+    cout << "thread " << threadid << " Coding and writing...\n";
     for (vector<triple>::iterator it=runVec.begin(); it != runVec.end(); ++it){
       // if (it->nterm == prevTerm){
       //   diffDoc = it->ndoc - prevDoc;
@@ -188,6 +228,7 @@ void indexer::index(string path_to_collection,int threadid, int *numberOfFiles){
       // prevTerm = it->nterm;
       // prevDoc = it->ndoc;
     }
+    // cout << "thread " << threadid << " wrote runs\n";
     for (vector<triple>::iterator it=runAnchor.begin(); it != runAnchor.end(); ++it){
       // if (it->nterm == prevTerm){
       //   diffDoc = it->ndoc - prevDoc;
@@ -202,11 +243,15 @@ void indexer::index(string path_to_collection,int threadid, int *numberOfFiles){
       // prevTerm = it->nterm;
       // prevDoc = it->ndoc;
     }
+    // cout << "thread " << threadid << " wrote anchor\n";
     fr.closeFile();
+    // cout << "thread " << threadid << " closed file\n";
     numberFile.lock();
     nFile = fileToIndex;
     fileToIndex++; //incrementa qual arquivo abrir em seguida
     numberFile.unlock();
+    break;
+    // cout << "thread " << threadid << " got out\n";
   }
   return;
 }

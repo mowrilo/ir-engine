@@ -13,18 +13,21 @@ vector<int> run::readAndDecode(){
   vector<int> ret;
   char *c = new char;
   vector<char> cVec;
+  // cout << runFile.eof() << "\n";
   runFile.read(c,1); //o primeiro byte de uma entrada sempre terá o bit mais significativo igual a 1
   char c2 = *c;
   // if ((int) c2 >= 0)  cout << "PORRA VEI!!!\n\n\n";
+  // cout << runFile.eof() << "\n";
   cVec.push_back(c2);
   runFile.read(c,1);
   c2=*c;
-  while ((((int) c2) >= 0) && !runFile.eof()){ //lê bytes enquanto o bit mais significativo seja igual a zero.
-    // cout << "oi\n";
+  while ((((int) c2) >= 0) && (!runFile.eof())){ //lê bytes enquanto o bit mais significativo seja igual a zero.
     cVec.push_back(c2);
     runFile.read(c,1);
+    // cout << (int) c2 << " oi\n";
     c2=*c;
   }
+  // cout << "saiu\n";
   if ((((int) c2) < 0)) runFile.unget(); //devolve o último
   delete[] c;
   int nums[3], i=0;
