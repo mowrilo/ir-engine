@@ -54,7 +54,7 @@ int main(){
   //   cout << "\n";
   // }
   // sortBlock sb(10, "anchorRuns/run");
-  // sb.buildIndex(4);
   // sb.sortAll(4);
+  // sb.buildIndex(4);
   return 0;
 }

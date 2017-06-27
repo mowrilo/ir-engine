@@ -26,6 +26,7 @@ public:
   void sortAll(int nFiles); //inicia a ordenação
   static void sort(int topLevel, int* value); //ordena em um nível
   void buildIndex(int value); //dado um arquivo ordenado com as runs, constrói o índice
+  void writeAll(vector<vector<int> > docsToWrite, string file);
 
 private:
   static int nBlocks;

@@ -16,6 +16,8 @@ class run{
     bool isEOF(); //checa fim de arquivo
     void close();
     void deleteFile(); //exclui o arquivo
+    void seek(int nbytes);
+    bool isOpen(void);
 
   private:
     ifstream runFile;
