@@ -13,10 +13,10 @@
 using namespace std;
 
 typedef struct documentoWei{
-  // float norm;
+  // double norm;
   string url;
-  float score;
-  // vector<float> weights;
+  double score;
+  // vector<double> weights;
 }documentoWei;
 
 class queryProcessor{
@@ -28,13 +28,17 @@ public:
   int getTermID(string term); //encontra a id do termo da consulta
   vector<int> mergeTerms(vector<int> term1, vector<int> term2); //interseção de duas listas
   vector<int> getDocTerms(int ndoc);
-  pair<float, unordered_map<int, float> > getWd(int ndoc, unordered_set<int> cons);
-  float getPageRank(int doc);
+  double getWd(int ndoc, unordered_set<int> cons);
+  double getPageRank(int doc);
   int getNDocs(int nterm);
   int getDomainN(int ndoc);
   int getAnchorNum(string termToFind);
-  unordered_map<int,float> getAnchorFreq(vector<string> termos);
+  unordered_map<int,double> getAnchorFreq(vector<string> termos);
+  void loadDocWeights();
+  void loadPageRank();
 
 private:
   int ndoctot;
+  unordered_map<int,double> pageRanks;
+  unordered_map<int,double> docWeights;
 };

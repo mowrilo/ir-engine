@@ -25,10 +25,10 @@ class indexer{
     indexer();
     static void index(string path_to_collection, int threadid, int* numberOfFiles, int *numberOfDocuments); //método a ser executado em paralelo
     void start(string path_to_collection); //começa a indexação
-    vector<int> getDocTerms(int ndoc);
-    int getNDocs(int nterm);
-    int getWd(int ndoc, int ndoctot);
-    void calcWd(int nofd);
+    static vector<int> getDocTerms(int ndoc);
+    static int getNDocs(int nterm);
+    static float getWd(int ndoc, int ndoctot);
+    static void calcWd(int nofd, int ii);
     // bool isValid(string url);
 
   private:

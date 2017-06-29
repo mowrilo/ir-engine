@@ -139,7 +139,7 @@ info parser::parse(string htmlToParse){//pair<, vector<string> >
             url = iit->second;
           }
         }
-        if ((url.size() < 60) && (url.size() > 10)){
+        if ((url.size() < 80) && (url.size() > 10)){
           string first4 = url.substr(0,4);
           if (first4.compare("http") == 0){
             // if (url.size() == 0)  cout << "ALO ALO MARCIANO\n";

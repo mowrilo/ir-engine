@@ -113,13 +113,16 @@ float indexer::getWd(int ndoc, int ndoctot){
     return sqrt(ret);
 }
 
-void indexer::calcWd(int nofd){
+void indexer::calcWd(int nofd, int ii){
     string path = "docs/wds";
+    path.append(to_string(ii));
     ofstream wds;
     wds.open(path, ios::out | ios::app);
     for (int i=1; i<=nofd; i++){
-        float wd = getWd(i,nofd);
-        if (wd > 0)   wds << i << " " << wd << "\n";
+        if ((i % 4) == ii){
+            float wd = getWd(i,nofd);
+            if (wd > 0)   wds << i << " " << wd << "\n";
+        }
     }
     wds.close();
 }
@@ -160,7 +163,16 @@ void indexer::start(string path_to_collection){
     // vector<thread> sortThreads;
     sortBlock sbAnc(10, "anchorRuns/run");
     sbAnc.sortAll(greater+1);
-    calcWd(nofd);
+    vector<thread> thrds1;
+    cout << "Calculating document weights...";
+    for (int i=0; i<NTHREADS; i++){ //Inicia as threads
+        thrds1.push_back(thread(calcWd, nofd, i));
+    }
+    for (int i=0; i<NTHREADS; i++){
+        thrds1[i].join();
+        cout << "joining thread " << i << "...\n";
+    }
+    // calcWd(nofd);
     // sortThreads.push_back(thread(sbRun.sortAll,greater));
     // sortThreads.push_back(thread(sbAnc.sortAll,greater));
 }
@@ -197,7 +209,11 @@ void indexer::index(string path_to_collection,int threadid, int *numberOfFiles, 
         vector<triple> runVec;
         vector<triple> runAnchor;
         while (tamanho > 3){ //enquanto houver um código válido
-            if ((url.size() > 10 && url.size() < 60) && isValid(url)){
+            string first4 = url.substr(0,4);
+            if (first4.compare("http") != 0){
+                url = "http://" + url
+            }
+            if ((url.size() > 10 && url.size() < 80) && isValid(url)){
                 // break;
                 // cout << "URL: " << url <<"\n";
                 // cout << "html: " << htmlCode.size() << "\n";

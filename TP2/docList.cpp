@@ -339,33 +339,42 @@ void documentList::calcDomPR(){
     //Inicia...
     cout << "calculating domain pagerank...\n";
     int domSize = domains.size();
-    vector<float> values(domSize, 1);
+    vector<double> values(domSize, 1);
     cout << "size of pages: " << domSize << "\n";
-    // vector<float> prevValues(prSize, 1);
+    // vector<double> prevValues(prSize, 1);
     int maxIt = 20;
-    // float change;
+    // double change;
     int iter = 0;
     while (iter < maxIt){
         iter++;
-        float difference = 0;
+        double difference = 0;
         for (unordered_map<int, unordered_set<int> >::iterator it = domainPageRank.begin(); it != domainPageRank.end(); ++it){
             int npage = it->first;
             unordered_set<int> backlinks = it->second;
             // cout << "npage: " << npage << "\n";
-            float prevPr = values[npage-1];
-            float val = 1 - DFACT;
+            double prevPr = values[npage-1];
+            double val = 1 - DFACT;
             for (unordered_set<int>::iterator itBL = backlinks.begin(); itBL != backlinks.end(); itBL++){
                 // cout << "backlink: " << *itBL << "\n";
-                float pr = values[*itBL - 1];
+                double pr = values[*itBL - 1];
                 // cout << "oi\n";
                 unordered_map<int,int>::iterator findN = fowardDoms.find(*itBL);
                 // cout << "oi2\n";
                 // cout << (findN == fowardDoms.end()) << "\n";
-                float nFL = findN->second;
+                double nFL = findN->second;
                 // cout << "oi3\n";
-                if (nFL > 0)   val += DFACT*(pr/nFL);
+                double add = DFACT*(pr/nFL);
+
+                if (isinf(add)){
+                    add = 0;
+                }
+                //if (nFL > 0){
+                val += add;
+                //}
             }
-            values[npage-1] = val;//calcPPRValue(npage, backlinks);
+            if (!isinf(val)){
+                values[npage-1] = val;//calcPPRValue(npage, backlinks);
+            }
             difference += abs(val - prevPr);
         }
         // for (int i=0; i<values.size())
