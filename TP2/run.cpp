@@ -43,6 +43,7 @@ void run::seek(int nbytes){
 }
 
 vector<int> run::readAndDecode(){
+    // cout << "runanddecode\n";
     vector<int> ret;
     char *c = new char;
     vector<char> cVec;
@@ -50,14 +51,16 @@ vector<int> run::readAndDecode(){
     runFile.read(c,1); //o primeiro byte de uma entrada sempre terá o bit mais significativo igual a 1
     char c2 = *c;
     // if ((int) c2 >= 0)    cout << "PORRA VEI!!!\n\n\n";
-    // cout << runFile.eof() << "\n";
     cVec.push_back(c2);
     runFile.read(c,1);
     c2=*c;
+    int teste = 1;
+    // cout << "olarolarolar\n" << "\n";
     while ((((int) c2) >= 0) && (!runFile.eof())){ //lê bytes enquanto o bit mais significativo seja igual a zero.
         cVec.push_back(c2);
         runFile.read(c,1);
-        // cout << (int) c2 << " oi\n";
+        // cout << teste << " " << (int) c2 << " oi\n";
+        teste++;
         c2=*c;
     }
     // cout << "saiu\n";
@@ -109,7 +112,7 @@ vector<int> run::readAndDecode(){
         // for (int asd=0; asd < boolvec.size(); asd++){
         //     cout << boolvec[asd];
         // }
-        // cout << "\n";
+        // cout << "alo alo marciano\n";
         int auxx = 0;
         eliasCoding::decode(&auxx,boolvec); //decodifica o número
         ret.push_back(auxx);

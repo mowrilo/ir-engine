@@ -56,7 +56,7 @@ void queryProcessor::loadPageRank(){
             // if (num == 397) cout << "AQUI SAFADO\n";
             if (pageRanks.find(num) == pageRanks.end()){
                 // if (num == 397) cout << "AQUI SAFADO\n";
-                pair<int,double> aux(num,log(pr));
+                pair<int,double> aux(num,log(pr + 1));
                 pageRanks.insert(aux);
             }
             // cout << i << "\n";
@@ -140,8 +140,9 @@ vector<int> queryProcessor::getDocs(int termId){//string termToFind){
         r.seek(ret[1]);
         ret = r.readAndDecode(); //lê o índice até encontrar o termo em questão
     }
-    cout << "frequencia na coleção: " << ret[2] << " docs in a total of " << ndoctot << "\n";
+    cout << "frequencia na coleçãooooo: " << ret[2] << " docs in a total of " << ndoctot << "\n";
     ret = r.readAndDecode();
+    cout << "oioi!\n";
     r.close();
     vector<int> retorno;
     int curDoc = 0;
@@ -263,49 +264,60 @@ int queryProcessor::getNDocs(int nterm){
     return 0;
 }
 
-unordered_map<int,double> queryProcessor::getWd(unordered_map<int,int> ndoc, unordered_set<int> cons){
+double queryProcessor::getWd(int ndoc, vector<unordered_map<int,int> > cons){
+    clock_t t1 = clock();
     double ret = 0;
-    unordered_map<int,double> foo;
-    // cout << "oi\n";
-    vector<int> terms = getDocTerms(ndoc);
-    // cout << "o2i\n";
-    // cout << "oi size:" << terms.size() << "\n";
+    // cout << "oi1\n";
     unordered_map<int,double>::iterator it = docWeights.find(ndoc);
     if (it == docWeights.end()) return 0;
     double norma = it->second;
-    for (int i=1; i<terms.size(); i+=2){
-        // cout << "will get terms:\n";
-        // vector<int> docums = getDocs(nterm);
-        // cout << "got terms!\n";
-        // cout << "parameters: " << freq << "    " << ndoctot << "    " << docsnum << "\n";
-        // if (docsnum == 0) docsnum++;
-        int nterm = terms[i];
-        double weight = 0;
-        if (cons.find(nterm) != cons.end()){
-            double freq = (double) terms[i+1];
-            double docsnum = (double) getNDocs(nterm);
-            weight = (1 + log(freq))*(log(1+(((double) ndoctot)/docsnum)));
-            pair<int,double> aew(nterm,weight);
-            foo.insert(aew);
-        }
-        // cout << "weight: " << weight << "\n";
+    // cout << "cons size:" << cons.size() << "\n";
+    for (int i=0; i<cons.size(); i++){
+        unordered_map<int,int>::iterator it = cons[i].find(ndoc);
+        double freq = 0;
+        if (it != cons[i].end())    freq = it->second;
+        // cout << "doc: " << ndoc << " freq: " << freq << "\n";
+        double docsnum = (double) cons[i].size();//getNDocs(nterm);
+        double weight = (1 + log(freq))*(log(1+(((double) ndoctot)/docsnum)));
         ret += weight*weight;
     }
+    double cosineScore = sqrt(ret);
+    // cout << "oi\n";
+    // vector<int> terms = getDocTerms(ndoc);
+    // cout << "o2i\n";
+    // cout << "oi size:" << terms.size() << "\n";
+    // for (int i=1; i<terms.size(); i+=2){
+    //     // cout << "will get terms:\n";
+    //     // vector<int> docums = getDocs(nterm);
+    //     // cout << "got terms!\n";
+    //     // cout << "parameters: " << freq << "    " << ndoctot << "    " << docsnum << "\n";
+    //     // if (docsnum == 0) docsnum++;
+    //     int nterm = terms[i];
+    //     double weight = 0;
+    //     if (cons.find(nterm) != cons.end()){
+    //         double freq = (double) terms[i+1];
+    //         pair<int,double> aew(nterm,weight);
+    //         foo.insert(aew);
+    //     }
+    //     // cout << "weight: " << weight << "\n";
+    // }
 
     // double norma = docInfo.first;
     // doc1.score = 0;
-    double cosineScore = 0;
-    for (unordered_set<int>::iterator itquer = cons.begin(); itquer != cons.end(); itquer++){
-        // unordered_map<int,double> aq = docInfo.second;
-        unordered_map<int,double>::iterator it = foo.find(*itquer);
-        if (it != foo.end()){
-            // cout << "asd> " << it->second << "\n";
-            cosineScore += it->second;
-        }
-    }
-    cosineScore /= norma;
+    // double cosineScore = 0;
+    // for (unordered_set<int>::iterator itquer = cons.begin(); itquer != cons.end(); itquer++){
+    //     // unordered_map<int,double> aq = docInfo.second;
+    //     unordered_map<int,double>::iterator it = foo.find(*itquer);
+    //     if (it != foo.end()){
+    //         // cout << "asd> " << it->second << "\n";
+    //         cosineScore += it->second;
+    //     }
+    // }
+    // cosineScore /= norma;
     // cout << "ndoc: " << ndoc << " score: " << sqrt(ret) << "\n";
     // unordered_map<int, double> retorna(sqrt(ret), foo);
+    clock_t t2 = clock();
+    cout << (t2-t1) << " <- tempo\n";
     return cosineScore;
 }
 
@@ -463,12 +475,20 @@ bool compara2(pair<double,int> a, pair<double,int> b){
     return (a.first > b.first);
 }
 
-unordered_map<int,double> scaleVector(unordered_map<int,double> a, double mult){
+unordered_map<int,double> scaleVector(unordered_map<int,double> a, double mult, int lim){
     double max = 0;
+    double min = 999999999999;
+    // int count = 0;
     for (unordered_map<int,double>::iterator it = a.begin(); it != a.end(); it++){
         if (it->second > max) max = it->second;
+        // count ++;
+        if ((it->second < min) && (it->second > lim)){
+            min = it->second;
+        }
     }
+    cout << "max: " << max << "\n";
     for (unordered_map<int,double>::iterator it = a.begin(); it != a.end(); it++){
+        it->second -= min;
         it->second /= max;
         it->second *= mult;
     }
@@ -485,23 +505,24 @@ void queryProcessor::process(string consulta){
     unordered_map<int,int> docsfreqs;
     unordered_set<int> quer;
     vector<int> quervec;
+    vector<unordered_map<int,int> > docsPerTerm;
     unordered_map<int,double> anchor = getAnchorFreq(termos);
     cout << "teste1!\n";
+    unordered_set<int> docss2;
     for (int i=0; i<termos.size(); i++){
         string termo = termos[i];
         // cout << "teste1!\n";
         int termId = getTermID(termo);
         // cout << "teste1!\n";
         vector<int> term1 = getDocs(termId);
+        unordered_map<int,int> termsF;
         // cout << "teste1!\n";
         cout << "docs: " << term1.size() << "\n";
-        for (int j=0;    j<term1.size(); j++){
-            unordered_set<int> docss2;
+        for (int j=0; j<term1.size(); j+=2){
             if (j%2 == 0){
-
-                if (docsfreqs.find(term1[j]) == docsfreqs.end()){
+                if (termsF.find(term1[j]) == termsF.end()){
                     pair<int,int> a(term1[j],term1[j+1]);
-                    docsfreqs.insert(a);
+                    termsF.insert(a);
                 }
 
                 if (docss2.find(term1[j]) == docss2.end()){
@@ -513,68 +534,137 @@ void queryProcessor::process(string consulta){
             //         docss2.insert(it->first);
             //     }
             // }
-            for (unordered_set<int>::iterator it=docss2.begin(); it!=docss2.end(); it++){
-                docss.push_back(*it);
-                // string url = findDoc(*it);
-                // if (url.find("vivo") != string::npos)   cout << "doc: " << url << "\n";
-            }
         }
+        docsPerTerm.push_back(termsF);
         int tnum = getTermID(termo);
-        quervec.push_back(tnum);
+        // quervec.push_back(tnum);
         quer.insert(tnum);
     }
+    for (unordered_set<int>::iterator it=docss2.begin(); it!=docss2.end(); it++){
+        docss.push_back(*it);
+        // string url = findDoc(*it);
+        // if (url.find("vivo") != string::npos)   cout << "doc: " << url << "\n";
+    }
+    cout << "docs size: " << docss.size() << "\n";
+
     // for (int i=0; i<docss.size(); i++){
     //     string url = findDoc(docss[i]);
     //     // if (url.find("facebook") != string::npos)    cout << url << ": " << getWd(docss[i],quer) << " " << getPageRank(docss[i]) << "\n";
     // }
 
-    cout << "docs size: " << docss.size() << "\n";
+    unordered_map<int,double> cosineSim;
+    for (int i=0; i<docss.size(); i++){
+        int ndoc = docss[i];
+        // clock_t t1 = clock();
+        // double sc = getWd(aux, docsPerTerm);
+        // clock_t t2 = clock();
+        // cout << (t2-t1) << " <- tempo after\n";
+
+        double ret = 0;
+        // cout << "oi1\n";
+        unordered_map<int,double>::iterator it = docWeights.find(ndoc);
+        if (it != docWeights.end()){
+            double norma = it->second;
+            // cout << "docsPerTerm size:" << docsPerTerm.size() << "\n";
+            for (int i=0; i<docsPerTerm.size(); i++){
+                unordered_map<int,int>::iterator it = docsPerTerm[i].find(ndoc);
+                double freq = 0;
+                if (it != docsPerTerm[i].end())    freq = it->second;
+                // cout << "doc: " << ndoc << " freq: " << freq << "\n";
+                double docsnum = (double) docsPerTerm[i].size();//getNDocs(nterm);
+                double weight = (1 + log(freq))*(log(1+(((double) ndoctot)/docsnum)));
+                ret += weight*weight;
+            }
+        }
+        double cosineScore = sqrt(ret);
+        string name = findDoc(ndoc);
+        // if (name.find("g1") != string::npos)    cout << "name: " << name << ": " << ndoc <<"\n";
+
+        pair<int,double> ins(ndoc,cosineScore);
+        cosineSim.insert(ins);
+    }
 
     vector<pair<double, int> > aux;
 
     unordered_map<int,double> prs;
     for (int i=0; i<docss.size(); i++){
-        pair<int,double> asd(docss[i],getPageRank(docss[i]));
+        int ndoc = docss[i];
+        int ndom = getDomainN(ndoc);
+        double prk=0;
+        string name = findDoc(ndoc);
+        // cout << "domain num: "<<ndom << "\n";
+        unordered_map<int,double>::iterator it = pageRanks.find(ndom);
+        if (it != pageRanks.end()){
+            // cout << "not found!\n";
+            // return 0;
+            prk = it->second;
+        }
+        // return it->second;
+        // if (name.find("g1") != string::npos)   cout << "pr of doc " << i << ": " << prk << "\n";
+        pair<int,double> asd(ndoc,prk);
         prs.insert(asd);
         // pair<double,int> asd(prs,docss[i]);
         // aux.push_back(asd);
     }
-    // cout << "aqui deu\n";
+    // cout << "pageRanks Done!\n";
     // cout << "aqui nao deu\n";
 
-    prs = scaleVector(prs,0.8);
-    anchor = scaleVector(anchor,0.5);
+    cosineSim = scaleVector(cosineSim,1,0);
+    cout << "pr\n";
+    prs = scaleVector(prs,1,100);
+    anchor = scaleVector(anchor,0.5,1);
     // cout << "aqui deu\n";
     // for (int i=0; i<docss.size(); i++){
     //     double prs = getPageRank(docss[i]);
     //     pair<double,int> asd(prs,docss[i]);
     //     aux.push_back(asd);
     // }
-
+    vector<documentoWei> docsPesos;
     for (int i=0; i<docss.size(); i++){
-        double scoreA = 0, scoreP = 0;
-        unordered_map<int,double>::iterator it = prs.find(docss[i]);
-        scoreP = it->second;
-        it = anchor.find(docss[i]);
-        if (it != anchor.end()) scoreA = it->second;
-        pair<double,int> asd((scoreA + scoreP),docss[i]);
-        aux.push_back(asd);
+        // double prScore = 0, acScore = 0, cosScore = 0;
+        documentoWei documentow;
+        documentow.ndoc = docss[i];
+        documentow.score = 0;
+        unordered_map<int,double>::iterator itScore = cosineSim.find(docss[i]);
+        if (itScore != cosineSim.end()) documentow.score += itScore->second;
+        if (docss[i] == 1170)   cout << "g1 cos score: " << itScore->second << "\n";
+        itScore = prs.find(docss[i]);
+        if (itScore != prs.end()) documentow.score += itScore->second;
+        if (docss[i] == 1170)   cout << "g1 pr score: " << itScore->second << "\n";
+        itScore = anchor.find(docss[i]);
+        if (itScore != anchor.end()) {
+            documentow.score += itScore->second;
+            if (docss[i] == 1170)   cout << "g1 at score: " << itScore->second << "\n";
+        }
+        if (docss[i] == 1170)   cout << "g1 total score: " << documentow.score << "\n";
+        docsPesos.push_back(documentow);
     }
-    cout << "aqui deu\n";
+
+    sort(docsPesos.begin(), docsPesos.end(), compara);
+    // for (int i=0; i<docss.size(); i++){
+    //     double scoreA = 0, scoreP = 0;
+    //     unordered_map<int,double>::iterator it = prs.find(docss[i]);
+    //     scoreP = it->second;
+    //     it = anchor.find(docss[i]);
+    //     if (it != anchor.end()) scoreA = it->second;
+    //     pair<double,int> asd((scoreA + scoreP),docss[i]);
+    //     aux.push_back(asd);
+    // }
+    // cout << "aqui deu\n";
 
     // sort(aux.begin(), aux.end(), compara2);
 
-    vector<double> prVec;
-    vector<int> docsaux;
-    for (int i=0; i<aux.size(); i++){
-        // if (i<50){
-            docsaux.push_back(aux[i].second);
-            prVec.push_back(aux[i].first);
-            // cout << "pr: " << aux[i].first << " doc: " << aux[i].second << "\n";
-        // }
-    }
-    // docsaux.push_back(docss[0]);
-    docss = docsaux;
+    // vector<double> prVec;
+    // vector<int> docsaux;
+    // for (int i=0; i<aux.size(); i++){
+    //     // if (i<50){
+    //         docsaux.push_back(aux[i].second);
+    //         prVec.push_back(aux[i].first);
+    //         // cout << "pr: " << aux[i].first << " doc: " << aux[i].second << "\n";
+    //     // }
+    // }
+    // // docsaux.push_back(docss[0]);
+    // docss = docsaux;
 
 
     // cout << "auxSize: " << aux.size() << "\n";
@@ -584,15 +674,34 @@ void queryProcessor::process(string consulta){
         cout << "Termo nao encontrado!\n";
         return;
     }
+    else{
+        cout << "O termo se encontra nos seguintes documentos:\n";
+        // int sizeDW = docPesos.size();
+        int limite = 10;//docsPesos.size();//min(10, sizeDW);
+        for (int i=0; i<limite; i++){
+            int docNumber = docsPesos[i].ndoc;
+            // if (osvaldo == 1170){
 
-    unordered_map<int,double> cosineSim;
+                // string docToReturn = findDoc(term1[i]);
+                double cscore=0, prscore=0, acscore=0;
+                unordered_map<int,double>::iterator itScore = cosineSim.find(docNumber);
+                if (itScore != cosineSim.end()) cscore= itScore->second;
+                itScore = prs.find(docNumber);
+                if (itScore != prs.end()) prscore= itScore->second;
+                itScore = anchor.find(docNumber);
+                if (itScore != anchor.end()) acscore= itScore->second;
+                cout << findDoc(docNumber) << " cos: " << cscore << " pr: " << prscore << " at: " << acscore << "\n"; // << docsPesos[i].score << "\n";// << docWei[i].score << "\n";
+            // }
+        }
+    }
+
     // for (int i=0; i<docss.size(); i++){
         // string docName =
         // documentoWei doc1;
         // cout << "searching...\n";
         // double prevScore = o
         // cout << "oi" << rand()%10 << "\n";
-        cosineSim = getWd(docss[i],quer);
+        // cosineSim = getWd(docss[i],quer);
         // cout << "got info\n";
         // double norma = docInfo.first;
         // // doc1.score = 0;
@@ -612,50 +721,42 @@ void queryProcessor::process(string consulta){
     //     pair<int,double> aux(docss[i],cosineScore);
     //     cosineSim.insert(aux);
     // }
-    cout << "ja tem os cossenos\n";
+    // cout << "ja tem os cossenos\n";
+    //
+    //
+    // vector<documentoWei> docWei;
+    // for (int i=0; i<docss.size(); i++){
+    //     // string docName =
+    //     documentoWei doc1;
+    //     // cout << "searching...\n";
+    //     // double prevScore = o
+    //     doc1.url = findDoc(docss[i]);
+    //     // cout << "found: " << doc1.url << "\n";
+    //     // pair<double, unordered_map<int, double> > docInfo = getWd(docss[i],quer);
+    //     // cout << "got info\n";
+    //     // doc1.norm = docInfo.first;
+    //     doc1.score = 0;
+    //     unordered_map<int,double>::iterator it = cosineSim.find(docss[i]);
+    //     doc1.score += it->second;
+    //     it = anchor.find(docss[i]);
+    //     if (it != anchor.end()) doc1.score += it->second;
+    //     it = prs.find(docss[i]);
+    //     doc1.score += it->second;
+    //     // for (int j=0; j<quervec.size(); j++){
+    //     //     unordered_map<int,double> aq = docInfo.second;
+    //     //     unordered_map<int,double>::iterator it = aq.find(quervec[j]);
+    //     //     if (it != aq.end()){
+    //     //         doc1.score += it->second;
+    //     //     }
+    //     // }
+    //     // doc1.score /= doc1.norm;
+    //     // cout << "score of " << doc1.url << ": " << doc1.score << "\n";
+    //     // doc1.score += prVec[i];
+    //     docWei.push_back(doc1);
+    // }
+    //
+    // sort(docWei.begin(), docWei.end(), compara);
 
-    cosineSim = scaleVector(cosineSim,1);
-
-    vector<documentoWei> docWei;
-    for (int i=0; i<docss.size(); i++){
-        // string docName =
-        documentoWei doc1;
-        // cout << "searching...\n";
-        // double prevScore = o
-        doc1.url = findDoc(docss[i]);
-        // cout << "found: " << doc1.url << "\n";
-        // pair<double, unordered_map<int, double> > docInfo = getWd(docss[i],quer);
-        // cout << "got info\n";
-        // doc1.norm = docInfo.first;
-        doc1.score = 0;
-        unordered_map<int,double>::iterator it = cosineSim.find(docss[i]);
-        doc1.score += it->second;
-        it = anchor.find(docss[i]);
-        if (it != anchor.end()) doc1.score += it->second;
-        it = prs.find(docss[i]);
-        doc1.score += it->second;
-        // for (int j=0; j<quervec.size(); j++){
-        //     unordered_map<int,double> aq = docInfo.second;
-        //     unordered_map<int,double>::iterator it = aq.find(quervec[j]);
-        //     if (it != aq.end()){
-        //         doc1.score += it->second;
-        //     }
-        // }
-        // doc1.score /= doc1.norm;
-        // cout << "score of " << doc1.url << ": " << doc1.score << "\n";
-        // doc1.score += prVec[i];
-        docWei.push_back(doc1);
-    }
-
-    sort(docWei.begin(), docWei.end(), compara);
-
-    cout << "O termo se encontra nos seguintes documentos:\n";
-    int sizeDW = docWei.size();
-    int limite = min(10, sizeDW);
-    for (int i=0; i<limite; i++){
-        // string docToReturn = findDoc(term1[i]);
-        cout << docWei[i].url << "\n";// << docWei[i].score << "\n";
-    }
     // cout << "aew\n";
     // int sum=0;
     // for (int i=0; i<term1.size(); i++){

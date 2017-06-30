@@ -211,7 +211,7 @@ void indexer::index(string path_to_collection,int threadid, int *numberOfFiles, 
         while (tamanho > 3){ //enquanto houver um código válido
             string first4 = url.substr(0,4);
             if (first4.compare("http") != 0){
-                url = "http://" + url
+                url = "http://" + url;
             }
             if ((url.size() > 10 && url.size() < 80) && isValid(url)){
                 // break;

@@ -3,6 +3,7 @@
 #include <fstream>
 #include <string>
 #include <algorithm>
+#include <ctime>
 #include <unordered_set>
 #include <unordered_map>
 #include "parser.hpp"
@@ -14,7 +15,7 @@ using namespace std;
 
 typedef struct documentoWei{
   // double norm;
-  string url;
+  int ndoc;
   double score;
   // vector<double> weights;
 }documentoWei;
@@ -28,7 +29,7 @@ public:
   int getTermID(string term); //encontra a id do termo da consulta
   vector<int> mergeTerms(vector<int> term1, vector<int> term2); //interseção de duas listas
   vector<int> getDocTerms(int ndoc);
-  double getWd(int ndoc, unordered_set<int> cons);
+  double getWd(int ndoc, vector<unordered_map<int,int> > cons);
   double getPageRank(int doc);
   int getNDocs(int nterm);
   int getDomainN(int ndoc);
