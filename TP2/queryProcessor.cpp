@@ -56,7 +56,7 @@ void queryProcessor::loadPageRank(){
             // if (num == 397) cout << "AQUI SAFADO\n";
             if (pageRanks.find(num) == pageRanks.end()){
                 // if (num == 397) cout << "AQUI SAFADO\n";
-                pair<int,double> aux(num,log(pr + 1));
+                pair<int,double> aux(num,pr);
                 pageRanks.insert(aux);
             }
             // cout << i << "\n";
@@ -475,18 +475,18 @@ bool compara2(pair<double,int> a, pair<double,int> b){
     return (a.first > b.first);
 }
 
-unordered_map<int,double> scaleVector(unordered_map<int,double> a, double mult, int lim){
+unordered_map<int,double> scaleVector(unordered_map<int,double> a, double mult){
     double max = 0;
     double min = 999999999999;
     // int count = 0;
     for (unordered_map<int,double>::iterator it = a.begin(); it != a.end(); it++){
         if (it->second > max) max = it->second;
         // count ++;
-        if ((it->second < min) && (it->second > lim)){
+        if (it->second < min){
             min = it->second;
         }
     }
-    cout << "max: " << max << "\n";
+    // cout << "max: " << max << "\n";
     for (unordered_map<int,double>::iterator it = a.begin(); it != a.end(); it++){
         it->second -= min;
         it->second /= max;
@@ -578,11 +578,12 @@ void queryProcessor::process(string consulta){
         }
         double cosineScore = sqrt(ret);
         string name = findDoc(ndoc);
-        // if (name.find("g1") != string::npos)    cout << "name: " << name << ": " << ndoc <<"\n";
-
+        // if (name.find("g1") != string::npos)    cout << "name: " << name << ": " << ndoc << " " << cosineScore <<"\n";
+        // if (name.find("www.facebook.com/bugaboostamps/") != string::npos)    cout << "name: " << name << ": " << ndoc << " " << cosineScore <<"\n";
         pair<int,double> ins(ndoc,cosineScore);
         cosineSim.insert(ins);
     }
+    cout << "calculou cossenos\n";
 
     vector<pair<double, int> > aux;
 
@@ -609,10 +610,10 @@ void queryProcessor::process(string consulta){
     // cout << "pageRanks Done!\n";
     // cout << "aqui nao deu\n";
 
-    cosineSim = scaleVector(cosineSim,1,0);
+    cosineSim = scaleVector(cosineSim,1);
     cout << "pr\n";
-    prs = scaleVector(prs,1,100);
-    anchor = scaleVector(anchor,0.5,1);
+    prs = scaleVector(prs,0.5);
+    anchor = scaleVector(anchor,0.5);
     // cout << "aqui deu\n";
     // for (int i=0; i<docss.size(); i++){
     //     double prs = getPageRank(docss[i]);
@@ -624,19 +625,19 @@ void queryProcessor::process(string consulta){
         // double prScore = 0, acScore = 0, cosScore = 0;
         documentoWei documentow;
         documentow.ndoc = docss[i];
-        documentow.score = 0;
+        documentow.score = 1;
         unordered_map<int,double>::iterator itScore = cosineSim.find(docss[i]);
-        if (itScore != cosineSim.end()) documentow.score += itScore->second;
+        if (itScore != cosineSim.end()) documentow.score *= itScore->second;
         if (docss[i] == 1170)   cout << "g1 cos score: " << itScore->second << "\n";
         itScore = prs.find(docss[i]);
-        if (itScore != prs.end()) documentow.score += itScore->second;
+        if (itScore != prs.end()) documentow.score *= itScore->second;
         if (docss[i] == 1170)   cout << "g1 pr score: " << itScore->second << "\n";
         itScore = anchor.find(docss[i]);
         if (itScore != anchor.end()) {
             documentow.score += itScore->second;
-            if (docss[i] == 1170)   cout << "g1 at score: " << itScore->second << "\n";
+            // if (docss[i] == 1170)   cout << "g1 at score: " << itScore->second << "\n";
         }
-        if (docss[i] == 1170)   cout << "g1 total score: " << documentow.score << "\n";
+        // if (docss[i] == 1170)   cout << "g1 total score: " << documentow.score << "\n";
         docsPesos.push_back(documentow);
     }
 

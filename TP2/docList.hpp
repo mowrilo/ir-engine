@@ -44,6 +44,7 @@ private:
   unordered_map<int,int> pages; //chave -> id do documento
   unordered_map<int,int> domains;
   unordered_map<int, unordered_set<int> > domainPageRank;
+  unordered_map<int, unordered_set<int> > fowPageRank;
   unordered_map<int, unordered_set<int> > pagePageRank;
   unordered_map<int,int> fowardPages;
   unordered_map<int,int> fowardDoms;

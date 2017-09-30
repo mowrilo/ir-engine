@@ -151,34 +151,36 @@ void documentList::addEdge(string docUrl, vector<string> edges, vector<int> edNu
     }
     // pair<int,int> fPg(pgNum, edgesPg.size());
     // fowardPages.insert(fPg);
-    if (fowardDoms.find(domnNum) == fowardDoms.end()){
+    unordered_map<int,unordered_set<int> >::iterator itFow = fowPageRank.find(domnNum);
+    if (itFow == fowPageRank.end()){
         // if (domnNum == 4142)    cout << "aqui!!\n\n\n";
-        pair<int,int> fDom(domnNum, edgesDoms.size());
-        fowardDoms.insert(fDom);
+        unordered_set<int> auxxx;
+        for (unordered_set<string>::iterator marcia = edgesDoms.begin(); marcia != edgesDoms.end(); marcia++){
+            int marciaKey = hashFunc(*marcia,domainWeights);
+            unordered_map<int,int>::iterator gerson = domains.find(marciaKey);
+            int auxMarcia = gerson->second;
+            if (auxxx.find(auxMarcia) == auxxx.end()){
+                auxxx.insert(auxMarcia);
+            }
+        }
+        pair<int,unordered_set<int> > fDom(domnNum, auxxx);
+        fowPageRank.insert(fDom);
     }
     else{
-        it->second += edgesDoms.size();
+        for (unordered_set<string>::iterator marcia = edgesDoms.begin(); marcia != edgesDoms.end(); marcia++){
+            int marciaKey = hashFunc(*marcia,domainWeights);
+            unordered_map<int,int>::iterator gerson = domains.find(marciaKey);
+            int auxMarcia = gerson->second;
+            if (itFow->second.find(auxMarcia) == itFow->second.end()){
+                itFow->second.insert(auxMarcia);
+            }
+        }
+        // itFow->second += edgesDoms.size();
     }
 
-    for (int i=0; i<edges.size(); i++){
-        // int edgePKey = hashFunc(edges[i],pageWeights);
-        // unordered_map<int,int>::iterator it = pages.find(edgePKey);
-        // // int edgeDomain = *it
-        // unordered_map<int, unordered_set<int> >::iterator itPage = pagePageRank.find(it->second);
-        // if (itPage == pagePageRank.end()){
-        //     unordered_set<int> usAux;
-        //     pair<int,unordered_set<int> > aux(it->second,usAux);
-        //     // cout << "adding domain number: " << domnNum << "\n";
-        //     pagePageRank.insert(aux);
-        // }
-        // itPage = pagePageRank.find(it->second);
-        // unordered_set<int>::iterator findPage = itPage->second.find(pgNum);
-        // if (findPage == itPage->second.end()){
-        //     itPage->second.insert(pgNum);
-        // }
-
-        string edgeDomain = getUrlDomain(edges[i]);
-        int edgeDKey = hashFunc(edgeDomain,domainWeights);
+    for (unordered_set<string>::iterator itEdge = edgesDoms.begin(); itEdge != edgesDoms.end(); ++itEdge){
+        // string edgeDomain = getUrlDomain(edges[i]);
+        int edgeDKey = hashFunc(*itEdge,domainWeights);
         it = domains.find(edgeDKey);
         // int edgeDomain = *it
         unordered_map<int, unordered_set<int> >::iterator itDom = domainPageRank.find(it->second);
@@ -194,6 +196,41 @@ void documentList::addEdge(string docUrl, vector<string> edges, vector<int> edNu
             itDom->second.insert(domnNum);
         }
     }
+
+    // for (int i=0; i<edges.size(); i++){
+    //     // int edgePKey = hashFunc(edges[i],pageWeights);
+    //     // unordered_map<int,int>::iterator it = pages.find(edgePKey);
+    //     // // int edgeDomain = *it
+    //     // unordered_map<int, unordered_set<int> >::iterator itPage = pagePageRank.find(it->second);
+    //     // if (itPage == pagePageRank.end()){
+    //     //     unordered_set<int> usAux;
+    //     //     pair<int,unordered_set<int> > aux(it->second,usAux);
+    //     //     // cout << "adding domain number: " << domnNum << "\n";
+    //     //     pagePageRank.insert(aux);
+    //     // }
+    //     // itPage = pagePageRank.find(it->second);
+    //     // unordered_set<int>::iterator findPage = itPage->second.find(pgNum);
+    //     // if (findPage == itPage->second.end()){
+    //     //     itPage->second.insert(pgNum);
+    //     // }
+    //
+    //     string edgeDomain = getUrlDomain(edges[i]);
+    //     int edgeDKey = hashFunc(edgeDomain,domainWeights);
+    //     it = domains.find(edgeDKey);
+    //     // int edgeDomain = *it
+    //     unordered_map<int, unordered_set<int> >::iterator itDom = domainPageRank.find(it->second);
+    //     if (itDom == domainPageRank.end()){
+    //         unordered_set<int> usAux;
+    //         pair<int,unordered_set<int> > aux(it->second,usAux);
+    //         // cout << "adding domain number: " << domnNum << "\n";
+    //         domainPageRank.insert(aux);
+    //     }
+    //     itDom = domainPageRank.find(it->second);
+    //     unordered_set<int>::iterator findDom = itDom->second.find(domnNum);
+    //     if (findDom == itDom->second.end()){
+    //         itDom->second.insert(domnNum);
+    //     }
+    // }
 
     // unordered_map<int, unordered_set<int> >::iterator itPR = domainPageRank.find(domnNum);
     // if (itPR == domainPageRank.end()){
@@ -358,10 +395,10 @@ void documentList::calcDomPR(){
                 // cout << "backlink: " << *itBL << "\n";
                 double pr = values[*itBL - 1];
                 // cout << "oi\n";
-                unordered_map<int,int>::iterator findN = fowardDoms.find(*itBL);
+                unordered_map<int, unordered_set<int> >::iterator findN = fowPageRank.find(*itBL);
                 // cout << "oi2\n";
                 // cout << (findN == fowardDoms.end()) << "\n";
-                double nFL = findN->second;
+                double nFL = (double) findN->second.size();
                 // cout << "oi3\n";
                 double add = DFACT*(pr/nFL);
 
