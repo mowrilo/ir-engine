@@ -1,0 +1,6 @@
+pseudoalgorithm:
+  1. read all of the html files, keeping track of the terms, documents (urls),
+  frequencies and positions.
+  2. save each of these relations as a tuple, in secondary memory.
+  3. at the end(at the middle???), sort the tuples with some external sort algorithm
+  (most likely external quick sort).
